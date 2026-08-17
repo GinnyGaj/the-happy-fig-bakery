@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+:root {
+  --background: oklch(0.964 0.014 84);
+  --foreground: oklch(0.335 0.024 55);
+  --card: oklch(0.985 0.008 86);
+  --primary: oklch(0.605 0.073 34);
+  --primary-foreground: oklch(0.98 0.01 86);
+  --secondary: oklch(0.856 0.032 132);
+  --secondary-foreground: oklch(0.335 0.024 90);
+  --muted: oklch(0.928 0.018 82);
+  --muted-foreground: oklch(0.524 0.023 60);
+  --accent: oklch(0.892 0.028 60);
+  --destructive: oklch(0.545 0.13 28);
+  --border: oklch(0.884 0.021 80);
+  --input: oklch(0.884 0.021 80);
+  --ring: oklch(0.72 0.045 40);
+  --radius: 0.5rem;
+  --shadow-paper: 0 1px 2px oklch(0.4 0.03 60 / 6%), 0 12px 28px -18px oklch(0.4 0.03 60 / 30%);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-lg: var(--radius);
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-karla);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-karla), sans-serif;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-fraunces), serif;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+@layer utilities {
+  .paper {
+    box-shadow: var(--shadow-paper);
+  }
+  .handwritten {
+    font-family: var(--font-fraunces), serif;
+    font-style: italic;
+    font-weight: 400;
+    color: var(--primary);
+  }
+}
