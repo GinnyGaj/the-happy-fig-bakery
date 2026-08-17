@@ -51,20 +51,37 @@ export async function getOrCreateThisWeeksMenu(): Promise<WeeklyMenu> {
   const supabase = await createClient();
   const weekStart = currentWeekStart();
 
-  const { data: existing } = await supabase
+  const { data: existing, error: selectError } = await supabase
     .from("weekly_menus")
     .select("*")
     .eq("week_start_date", weekStart)
     .maybeSingle();
 
+  if (selectError) throw new Error(`Failed to fetch weekly menu: ${selectError.message}`);
   if (existing) return existing as WeeklyMenu;
 
-  const { data: created } = await supabase
+  const { data: created, error: insertError } = await supabase
     .from("weekly_menus")
     .insert({ week_start_date: weekStart })
     .select("*")
     .single();
 
+  if (insertError) {
+    // Another concurrent request may have inserted this week's row first
+    // (week_start_date is unique) — fall back to reading it instead of failing.
+    const { data: raceWinner, error: retryError } = await supabase
+      .from("weekly_menus")
+      .select("*")
+      .eq("week_start_date", weekStart)
+      .single();
+
+    if (retryError || !raceWinner) {
+      throw new Error(`Failed to create weekly menu: ${insertError.message}`);
+    }
+    return raceWinner as WeeklyMenu;
+  }
+
+  if (!created) throw new Error("Failed to create weekly menu: no row returned");
   return created as WeeklyMenu;
 }
 
