@@ -16,9 +16,9 @@ const karla = Karla({
 });
 
 export const metadata: Metadata = {
-  title: "The Happy Fig — North London Microbakery",
+  title: "The Happy Fig — London home bakery",
   description:
-    "Homemade pastries, baked in small batches in North London. Pre-order Thursday, collect Saturday.",
+    "Homemade pastries, baked in small batches in London. Pre-order only.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
