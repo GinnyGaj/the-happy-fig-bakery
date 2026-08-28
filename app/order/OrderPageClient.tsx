@@ -14,6 +14,7 @@ export function OrderPageClient({
   announcement,
   items,
   soldOutIds,
+  stockByItem,
   pickupDate,
   pickupStartTime,
   pickupEndTime,
@@ -22,6 +23,7 @@ export function OrderPageClient({
   announcement: string | null;
   items: MenuItem[];
   soldOutIds: string[];
+  stockByItem: Record<string, number>;
   pickupDate: string | null;
   pickupStartTime: string | null;
   pickupEndTime: string | null;
@@ -33,6 +35,7 @@ export function OrderPageClient({
         announcement={announcement}
         items={items}
         soldOutIds={soldOutIds}
+        stockByItem={stockByItem}
         pickupDate={pickupDate}
         pickupStartTime={pickupStartTime}
         pickupEndTime={pickupEndTime}
@@ -46,6 +49,7 @@ function OrderPageInner({
   announcement,
   items,
   soldOutIds,
+  stockByItem,
   pickupDate,
   pickupStartTime,
   pickupEndTime,
@@ -54,6 +58,7 @@ function OrderPageInner({
   announcement: string | null;
   items: MenuItem[];
   soldOutIds: string[];
+  stockByItem: Record<string, number>;
   pickupDate: string | null;
   pickupStartTime: string | null;
   pickupEndTime: string | null;
@@ -118,7 +123,12 @@ function OrderPageInner({
 
       <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2">
         {items.map((item) => (
-          <MenuCard key={item.id} item={item} soldOut={soldOut.has(item.id)} />
+          <MenuCard
+            key={item.id}
+            item={item}
+            soldOut={soldOut.has(item.id)}
+            remainingStock={item.id in stockByItem ? stockByItem[item.id] : null}
+          />
         ))}
       </div>
 

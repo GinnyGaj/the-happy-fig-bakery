@@ -12,6 +12,9 @@ export default async function Home() {
   const soldOutIds = new Set(
     stock.filter((s) => s.current_stock <= 0).map((s) => s.menu_item_id)
   );
+  const stockByItem = Object.fromEntries(
+    stock.map((s) => [s.menu_item_id, s.current_stock])
+  );
 
   const formOpen = Boolean(weeklyMenu?.form_open);
   const dayDate = weeklyMenu?.pickup_date ? formatDayDate(weeklyMenu.pickup_date) : null;
@@ -46,7 +49,13 @@ export default async function Home() {
               )}
               <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 opacity-50 pointer-events-none">
                 {items.map((item) => (
-                  <MenuCard key={item.id} item={item} soldOut={soldOutIds.has(item.id)} readOnly />
+                  <MenuCard
+                    key={item.id}
+                    item={item}
+                    soldOut={soldOutIds.has(item.id)}
+                    remainingStock={stockByItem[item.id] ?? null}
+                    readOnly
+                  />
                 ))}
               </div>
             </>
@@ -56,6 +65,7 @@ export default async function Home() {
               announcement={weeklyMenu.announcement_message}
               items={items}
               soldOutIds={Array.from(soldOutIds)}
+              stockByItem={stockByItem}
               pickupDate={weeklyMenu.pickup_date}
               pickupStartTime={weeklyMenu.pickup_start_time}
               pickupEndTime={weeklyMenu.pickup_end_time}

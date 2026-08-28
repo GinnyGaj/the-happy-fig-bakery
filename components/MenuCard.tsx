@@ -13,13 +13,17 @@ export function MenuCard({
   item,
   soldOut = false,
   readOnly = false,
+  remainingStock = null,
 }: {
   item: MenuItem;
   soldOut?: boolean;
   readOnly?: boolean;
+  remainingStock?: number | null;
 }) {
   const cart = useCartIfAvailable();
   const current = cart?.lines.find((l) => l.item.id === item.id)?.quantity ?? 0;
+  const maxQty =
+    remainingStock === null ? MAX_QTY : Math.max(0, Math.min(MAX_QTY, remainingStock));
 
   return (
     <div
@@ -64,7 +68,7 @@ export function MenuCard({
                 onChange={(e) => cart?.setQuantity(item, Number(e.target.value))}
                 className="w-20"
               >
-                {Array.from({ length: MAX_QTY + 1 }, (_, i) => (
+                {Array.from({ length: maxQty + 1 }, (_, i) => (
                   <option key={i} value={i}>
                     {i}
                   </option>
