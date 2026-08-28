@@ -7,7 +7,7 @@ export function Header() {
         <Link href="/" className="flex flex-col leading-tight">
           <span className="font-display text-xl">The Happy Fig</span>
           <span className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-            North London N22
+            HOME BAKERY
           </span>
         </Link>
       </div>

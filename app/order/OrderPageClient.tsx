@@ -136,7 +136,6 @@ function OrderPageInner({
               type="tel"
               required
               autoComplete="tel"
-              placeholder="07123 456789"
             />
           </Field>
           <Field
