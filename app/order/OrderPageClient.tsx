@@ -15,12 +15,16 @@ export function OrderPageClient({
   items,
   soldOutIds,
   pickupDate,
+  pickupStartTime,
+  pickupEndTime,
 }: {
   weeklyMenuId: string;
   announcement: string | null;
   items: MenuItem[];
   soldOutIds: string[];
   pickupDate: string | null;
+  pickupStartTime: string | null;
+  pickupEndTime: string | null;
 }) {
   return (
     <CartProvider>
@@ -30,6 +34,8 @@ export function OrderPageClient({
         items={items}
         soldOutIds={soldOutIds}
         pickupDate={pickupDate}
+        pickupStartTime={pickupStartTime}
+        pickupEndTime={pickupEndTime}
       />
     </CartProvider>
   );
@@ -41,18 +47,23 @@ function OrderPageInner({
   items,
   soldOutIds,
   pickupDate,
+  pickupStartTime,
+  pickupEndTime,
 }: {
   weeklyMenuId: string;
   announcement: string | null;
   items: MenuItem[];
   soldOutIds: string[];
   pickupDate: string | null;
+  pickupStartTime: string | null;
+  pickupEndTime: string | null;
 }) {
   const router = useRouter();
   const { lines } = useCart();
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const [pickupConfirmed, setPickupConfirmed] = useState(false);
   const soldOut = new Set(soldOutIds);
 
   async function handleSubmit() {
@@ -143,7 +154,15 @@ function OrderPageInner({
       </div>
 
       <div className="mt-14 max-w-2xl">
-        <OrderSummary submitting={submitting} onSubmit={handleSubmit} />
+        <OrderSummary
+          submitting={submitting}
+          onSubmit={handleSubmit}
+          pickupDate={pickupDate}
+          pickupStartTime={pickupStartTime}
+          pickupEndTime={pickupEndTime}
+          pickupConfirmed={pickupConfirmed}
+          onPickupConfirmedChange={setPickupConfirmed}
+        />
       </div>
     </>
   );

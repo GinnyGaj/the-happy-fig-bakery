@@ -57,6 +57,8 @@ export default async function Home() {
               items={items}
               soldOutIds={Array.from(soldOutIds)}
               pickupDate={weeklyMenu.pickup_date}
+              pickupStartTime={weeklyMenu.pickup_start_time}
+              pickupEndTime={weeklyMenu.pickup_end_time}
             />
           )}
         </div>

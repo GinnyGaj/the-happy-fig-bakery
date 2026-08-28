@@ -1,15 +1,25 @@
 "use client";
 
 import { useCart } from "@/lib/cart";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, formatDayDate, formatTimeOnly } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 
 export function OrderSummary({
   submitting,
   onSubmit,
+  pickupDate,
+  pickupStartTime,
+  pickupEndTime,
+  pickupConfirmed,
+  onPickupConfirmedChange,
 }: {
   submitting: boolean;
   onSubmit: () => void;
+  pickupDate: string | null;
+  pickupStartTime: string | null;
+  pickupEndTime: string | null;
+  pickupConfirmed: boolean;
+  onPickupConfirmedChange: (checked: boolean) => void;
 }) {
   const { lines, remove, subtotal } = useCart();
 
@@ -45,10 +55,25 @@ export function OrderSummary({
           <span>{formatPrice(subtotal)}</span>
         </div>
       </div>
+      {pickupDate && pickupStartTime && pickupEndTime && (
+        <label className="mt-4 flex items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={pickupConfirmed}
+            onChange={(e) => onPickupConfirmedChange(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0"
+          />
+          <span>
+            I can pick up the order from 185 Boundary Road, N226AL on{" "}
+            {formatDayDate(pickupDate)} between {formatTimeOnly(pickupStartTime)} AM and{" "}
+            {formatTimeOnly(pickupEndTime)} AM
+          </span>
+        </label>
+      )}
       <Button
         type="button"
         onClick={onSubmit}
-        disabled={lines.length === 0 || submitting}
+        disabled={lines.length === 0 || submitting || !pickupConfirmed}
         className="mt-5 w-full"
       >
         {submitting ? "Placing your order…" : "Place My Order"}

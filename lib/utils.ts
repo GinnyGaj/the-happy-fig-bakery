@@ -18,6 +18,12 @@ export function formatDayOnly(dateStr: string) {
   return d.toLocaleDateString("en-GB", { weekday: "long" });
 }
 
+export function formatTimeOnly(timeStr: string) {
+  const [hours, minutes] = timeStr.split(":").map(Number);
+  const hour12 = hours % 12 === 0 ? 12 : hours % 12;
+  return minutes === 0 ? `${hour12}` : `${hour12}:${String(minutes).padStart(2, "0")}`;
+}
+
 export function currentWeekStart(date = new Date()) {
   const d = new Date(date);
   const day = d.getDay();
