@@ -81,3 +81,20 @@ export async function placeOrder(
 
   return { orderId: data.id };
 }
+
+export async function deleteOrder(orderId: string): Promise<{ error?: string }> {
+  const parsed = z.string().uuid().safeParse(orderId);
+  if (!parsed.success) {
+    return { error: "Invalid order id." };
+  }
+
+  const supabase = createServiceClient();
+  const { error } = await supabase.from("orders").delete().eq("id", parsed.data);
+
+  if (error) {
+    console.error("deleteOrder failed:", error);
+    return { error: "Something went wrong deleting the order. Please try again." };
+  }
+
+  return {};
+}

@@ -1,14 +1,36 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { formatPrice } from "@/lib/utils";
+import { deleteOrder } from "@/lib/actions/orders";
 import type { Order } from "@/lib/types";
 
 export function OrdersTable({ orders }: { orders: Order[] }) {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  async function handleDelete(order: Order) {
+    const confirmed = window.confirm(
+      `Delete the order from ${order.customer_first_name} ${order.customer_last_name}? This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    setDeletingId(order.id);
+    const result = await deleteOrder(order.id);
+    setDeletingId(null);
+
+    if (result.error) {
+      window.alert(result.error);
+      return;
+    }
+
+    router.refresh();
+  }
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -67,6 +89,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
               <th className="px-4 py-3">Items</th>
               <th className="px-4 py-3">Total</th>
               <th className="px-4 py-3">Ordered</th>
+              <th className="px-4 py-3">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -87,10 +110,20 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
                   <td className="px-4 py-3">
                     {new Date(order.created_at).toLocaleString("en-GB")}
                   </td>
+                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      type="button"
+                      onClick={() => handleDelete(order)}
+                      disabled={deletingId === order.id}
+                      className="h-8 bg-destructive px-3 text-xs text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {deletingId === order.id ? "Deleting..." : "Delete"}
+                    </Button>
+                  </td>
                 </tr>
                 {expanded === order.id && (
                   <tr className="border-b border-border bg-muted/30">
-                    <td colSpan={5} className="px-4 py-3 text-muted-foreground">
+                    <td colSpan={6} className="px-4 py-3 text-muted-foreground">
                       {order.special_instructions
                         ? `Notes: ${order.special_instructions}`
                         : "No special instructions."}
@@ -101,7 +134,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">
+                <td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">
                   No orders yet.
                 </td>
               </tr>
