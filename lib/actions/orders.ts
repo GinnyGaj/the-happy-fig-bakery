@@ -85,7 +85,7 @@ export async function deleteOrder(orderId: string): Promise<{ error?: string }> 
   }
 
   const supabase = createServiceClient();
-  const { error } = await supabase.from("orders").delete().eq("id", parsed.data);
+  const { error } = await supabase.rpc("delete_order", { p_order_id: parsed.data });
 
   if (error) {
     console.error("deleteOrder failed:", error);

@@ -138,6 +138,41 @@ begin
 end;
 $$ language plpgsql;
 
+-- Deletes an order and restores any stock it had consumed, atomically.
+-- Symmetric to place_order: for each item on the order, current_stock is
+-- incremented back up (capped at stock_limit) for the order's weekly menu.
+create or replace function delete_order(p_order_id uuid) returns void as $$
+declare
+  v_weekly_menu_id uuid;
+  v_order_items jsonb;
+  v_item jsonb;
+  v_item_id uuid;
+  v_quantity integer;
+begin
+  select weekly_menu_id, order_items into v_weekly_menu_id, v_order_items
+  from orders
+  where id = p_order_id;
+
+  if not found then
+    return;
+  end if;
+
+  for v_item in select * from jsonb_array_elements(v_order_items)
+  loop
+    v_item_id := (v_item->>'item_id')::uuid;
+    v_quantity := (v_item->>'quantity')::integer;
+
+    update stock_limits
+    set current_stock = least(stock_limit, current_stock + v_quantity),
+        updated_at = now()
+    where weekly_menu_id = v_weekly_menu_id
+      and menu_item_id = v_item_id;
+  end loop;
+
+  delete from orders where id = p_order_id;
+end;
+$$ language plpgsql;
+
 -- Row-Level Security
 alter table menu_items enable row level security;
 alter table weekly_menus enable row level security;
