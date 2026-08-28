@@ -50,6 +50,26 @@ export async function placeOrder(
 
   const supabase = createServiceClient();
 
+  const { data: stockRows } = await supabase
+    .from("stock_limits")
+    .select("menu_item_id, current_stock")
+    .eq("weekly_menu_id", weeklyMenuId)
+    .in(
+      "menu_item_id",
+      items.map((i) => i.item_id)
+    );
+
+  const stockByItem = new Map((stockRows ?? []).map((s) => [s.menu_item_id, s.current_stock]));
+
+  for (const item of items) {
+    const available = stockByItem.get(item.item_id);
+    if (available != null && item.quantity > available) {
+      return {
+        error: `Sorry, ${item.name} just sold out. Please update your order.`,
+      };
+    }
+  }
+
   const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
   const { data, error } = await supabase

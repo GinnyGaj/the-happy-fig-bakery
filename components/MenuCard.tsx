@@ -22,7 +22,11 @@ export function MenuCard({
   const current = cart?.lines.find((l) => l.item.id === item.id)?.quantity ?? 0;
 
   return (
-    <div className="paper flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+    <div
+      className={`paper flex flex-col overflow-hidden rounded-2xl border border-border bg-card ${
+        soldOut ? "opacity-50 grayscale" : ""
+      }`}
+    >
       <div className="relative aspect-4/3 w-full bg-muted">
         {item.image_url ? (
           <Image src={item.image_url} alt={item.name} fill className="object-cover" />

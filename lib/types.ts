@@ -8,6 +8,7 @@ export interface MenuItem {
   image_url: string | null;
   dietary_tags: DietaryTag[];
   is_free_item: boolean;
+  max_limit: number | null;
   created_at: string;
   updated_at: string;
 }

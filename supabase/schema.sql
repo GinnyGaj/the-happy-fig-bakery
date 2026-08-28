@@ -76,6 +76,9 @@ create table whatsapp_logs (
 alter table weekly_menus add column if not exists pickup_start_time time;
 alter table weekly_menus add column if not exists pickup_end_time time;
 
+-- Migration: add per-item order max limit (null = unlimited) (safe to re-run)
+alter table menu_items add column if not exists max_limit integer;
+
 -- Decrements stock for an item, floored at zero.
 create or replace function decrement_stock(
   p_weekly_menu_id uuid,

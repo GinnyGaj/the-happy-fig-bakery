@@ -41,7 +41,10 @@ export function ItemLibrary({ items }: { items: MenuItem[] }) {
           <li key={item.id} className="flex items-center justify-between gap-3 px-5 py-4">
             <div>
               <p className="font-medium">{item.name}</p>
-              <p className="text-sm text-muted-foreground">{formatPrice(item.price)}</p>
+              <p className="text-sm text-muted-foreground">
+                {formatPrice(item.price)}
+                {item.max_limit != null && ` · Max ${item.max_limit} per week`}
+              </p>
             </div>
             <div className="flex items-center gap-4">
               <button
@@ -121,6 +124,17 @@ function ItemForm({ item, onDone }: { item: MenuItem | null; onDone: () => void 
           <Input id="price" name="price" type="number" step="0.01" min="0" defaultValue={item?.price} required />
         </Field>
       </div>
+      <Field label="Max orders per week (optional)" htmlFor="max_limit">
+        <Input
+          id="max_limit"
+          name="max_limit"
+          type="number"
+          step="1"
+          min="0"
+          placeholder="Unlimited"
+          defaultValue={item?.max_limit ?? ""}
+        />
+      </Field>
       <Field label="Description" htmlFor="description">
         <Textarea id="description" name="description" defaultValue={item?.description ?? ""} />
       </Field>

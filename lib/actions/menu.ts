@@ -4,6 +4,13 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { DietaryTag } from "@/lib/types";
 
+function parseMaxLimit(formData: FormData): number | null {
+  const raw = formData.get("max_limit") as string;
+  if (!raw || raw.trim() === "") return null;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
 export async function createMenuItem(formData: FormData) {
   const supabase = await createClient();
 
@@ -16,6 +23,7 @@ export async function createMenuItem(formData: FormData) {
     image_url: (formData.get("image_url") as string) || null,
     dietary_tags,
     is_free_item: formData.get("is_free_item") === "on",
+    max_limit: parseMaxLimit(formData),
   });
 
   if (error) throw new Error(error.message);
@@ -36,6 +44,7 @@ export async function updateMenuItem(id: string, formData: FormData) {
       image_url: (formData.get("image_url") as string) || null,
       dietary_tags,
       is_free_item: formData.get("is_free_item") === "on",
+      max_limit: parseMaxLimit(formData),
       updated_at: new Date().toISOString(),
     })
     .eq("id", id);
@@ -93,8 +102,58 @@ export async function publishWeeklyMenu(
     if (error) throw new Error(error.message);
   }
 
+  const { data: existingMenu } = await supabase
+    .from("weekly_menus")
+    .select("id")
+    .eq("week_start_date", weekStartDate)
+    .single();
+  const weeklyMenuId = existingMenu!.id as string;
+
+  await syncStockLimits(supabase, weeklyMenuId, menuItemIds);
+
   revalidatePath("/admin/menu");
   revalidatePath("/");
+}
+
+async function syncStockLimits(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  weeklyMenuId: string,
+  menuItemIds: string[]
+) {
+  const { data: items } = await supabase
+    .from("menu_items")
+    .select("id, max_limit")
+    .in("id", menuItemIds.length > 0 ? menuItemIds : [""]);
+
+  const { data: existingLimits } = await supabase
+    .from("stock_limits")
+    .select("id, menu_item_id, stock_limit")
+    .eq("weekly_menu_id", weeklyMenuId);
+
+  const existingByItem = new Map((existingLimits ?? []).map((s) => [s.menu_item_id, s]));
+
+  for (const item of items ?? []) {
+    const existing = existingByItem.get(item.id);
+    if (item.max_limit == null) {
+      if (existing) {
+        await supabase.from("stock_limits").delete().eq("id", existing.id);
+      }
+      continue;
+    }
+    if (!existing) {
+      await supabase.from("stock_limits").insert({
+        weekly_menu_id: weeklyMenuId,
+        menu_item_id: item.id,
+        stock_limit: item.max_limit,
+        current_stock: item.max_limit,
+      });
+    } else if (existing.stock_limit !== item.max_limit) {
+      await supabase
+        .from("stock_limits")
+        .update({ stock_limit: item.max_limit, updated_at: new Date().toISOString() })
+        .eq("id", existing.id);
+    }
+  }
 }
 
 export async function setFormOpen(weeklyMenuId: string, open: boolean) {
