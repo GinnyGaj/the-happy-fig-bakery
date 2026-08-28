@@ -49,7 +49,11 @@ export async function deleteMenuItem(id: string) {
   revalidatePath("/admin/menu");
 }
 
-export async function publishWeeklyMenu(weekStartDate: string, menuItemIds: string[]) {
+export async function publishWeeklyMenu(
+  weekStartDate: string,
+  menuItemIds: string[],
+  pickupDate: string | null
+) {
   const supabase = await createClient();
 
   const { data: existing } = await supabase
@@ -63,6 +67,7 @@ export async function publishWeeklyMenu(weekStartDate: string, menuItemIds: stri
       .from("weekly_menus")
       .update({
         menu_item_ids: menuItemIds,
+        pickup_date: pickupDate,
         is_published: true,
         published_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -73,6 +78,7 @@ export async function publishWeeklyMenu(weekStartDate: string, menuItemIds: stri
     const { error } = await supabase.from("weekly_menus").insert({
       week_start_date: weekStartDate,
       menu_item_ids: menuItemIds,
+      pickup_date: pickupDate,
       is_published: true,
       published_at: new Date().toISOString(),
     });
@@ -80,7 +86,7 @@ export async function publishWeeklyMenu(weekStartDate: string, menuItemIds: stri
   }
 
   revalidatePath("/admin/menu");
-  revalidatePath("/order");
+  revalidatePath("/");
 }
 
 export async function setFormOpen(weeklyMenuId: string, open: boolean) {
@@ -91,7 +97,7 @@ export async function setFormOpen(weeklyMenuId: string, open: boolean) {
     .eq("id", weeklyMenuId);
   if (error) throw new Error(error.message);
   revalidatePath("/admin/form-settings");
-  revalidatePath("/order");
+  revalidatePath("/");
 }
 
 export async function setAnnouncement(weeklyMenuId: string, message: string) {
@@ -102,5 +108,5 @@ export async function setAnnouncement(weeklyMenuId: string, message: string) {
     .eq("id", weeklyMenuId);
   if (error) throw new Error(error.message);
   revalidatePath("/admin/form-settings");
-  revalidatePath("/order");
+  revalidatePath("/");
 }

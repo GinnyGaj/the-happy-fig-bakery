@@ -8,6 +8,16 @@ export function formatPrice(price: number) {
   return `£${price.toFixed(2)}`;
 }
 
+export function formatDayDate(dateStr: string) {
+  const d = new Date(`${dateStr}T00:00:00`);
+  return d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" });
+}
+
+export function formatDayOnly(dateStr: string) {
+  const d = new Date(`${dateStr}T00:00:00`);
+  return d.toLocaleDateString("en-GB", { weekday: "long" });
+}
+
 export function currentWeekStart(date = new Date()) {
   const d = new Date(date);
   const day = d.getDay();

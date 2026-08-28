@@ -15,6 +15,7 @@ export interface MenuItem {
 export interface WeeklyMenu {
   id: string;
   week_start_date: string;
+  pickup_date: string | null;
   menu_item_ids: string[];
   is_published: boolean;
   form_open: boolean;

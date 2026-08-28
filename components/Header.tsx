@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ButtonLink } from "@/components/ui/Button";
 
 export function Header() {
   return (
@@ -11,23 +10,6 @@ export function Header() {
             North London N22
           </span>
         </Link>
-        <nav className="flex items-center gap-6">
-          <Link
-            href="/#about"
-            className="hidden text-sm text-foreground transition-colors hover:text-primary sm:inline"
-          >
-            About
-          </Link>
-          <Link
-            href="/#faq"
-            className="hidden text-sm text-foreground transition-colors hover:text-primary sm:inline"
-          >
-            FAQ
-          </Link>
-          <ButtonLink href="/order" className="h-10 px-5 text-sm">
-            Order Now
-          </ButtonLink>
-        </nav>
       </div>
     </header>
   );

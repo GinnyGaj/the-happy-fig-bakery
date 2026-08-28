@@ -16,6 +16,7 @@ create table menu_items (
 create table weekly_menus (
   id uuid primary key default gen_random_uuid(),
   week_start_date date not null unique,
+  pickup_date date,
   menu_item_ids uuid[] not null default '{}',
   is_published boolean not null default false,
   form_open boolean not null default false,

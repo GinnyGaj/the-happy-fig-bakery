@@ -14,11 +14,13 @@ export function OrderPageClient({
   announcement,
   items,
   soldOutIds,
+  pickupDate,
 }: {
   weeklyMenuId: string;
   announcement: string | null;
   items: MenuItem[];
   soldOutIds: string[];
+  pickupDate: string | null;
 }) {
   return (
     <CartProvider>
@@ -27,6 +29,7 @@ export function OrderPageClient({
         announcement={announcement}
         items={items}
         soldOutIds={soldOutIds}
+        pickupDate={pickupDate}
       />
     </CartProvider>
   );
@@ -37,11 +40,13 @@ function OrderPageInner({
   announcement,
   items,
   soldOutIds,
+  pickupDate,
 }: {
   weeklyMenuId: string;
   announcement: string | null;
   items: MenuItem[];
   soldOutIds: string[];
+  pickupDate: string | null;
 }) {
   const router = useRouter();
   const { lines } = useCart();
@@ -88,6 +93,7 @@ function OrderPageInner({
           .reduce((sum, l) => sum + l.item.price * l.quantity, 0)
           .toFixed(2),
         items: lines.map((l) => `${l.item.name}|${l.quantity}|${l.item.price}`).join(","),
+        ...(pickupDate ? { pickupDate } : {}),
       });
       router.push(`/confirmation?${params.toString()}`);
     }

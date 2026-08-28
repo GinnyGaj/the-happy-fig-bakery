@@ -1,16 +1,18 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ButtonLink } from "@/components/ui/Button";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, formatDayDate, formatDayOnly } from "@/lib/utils";
 
 export default async function ConfirmationPage({
   searchParams,
 }: PageProps<"/confirmation">) {
   const params = await searchParams;
   const name = typeof params.name === "string" ? params.name : "";
-  const whatsapp = typeof params.whatsapp === "string" ? params.whatsapp : "";
   const subtotal = typeof params.subtotal === "string" ? params.subtotal : "0.00";
   const itemsRaw = typeof params.items === "string" ? params.items : "";
+  const pickupDate = typeof params.pickupDate === "string" ? params.pickupDate : "";
+  const dayDate = pickupDate ? formatDayDate(pickupDate) : null;
+  const dayOnly = pickupDate ? formatDayOnly(pickupDate) : null;
 
   const items = itemsRaw
     .split(",")
@@ -27,6 +29,7 @@ export default async function ConfirmationPage({
         <div className="mx-auto max-w-2xl px-5 py-16 text-center">
           <h1 className="text-4xl text-primary">Your order is booked ✓</h1>
           <p className="mt-3 text-lg">Thank you, {name || "friend"}</p>
+          {dayDate && <p className="mt-1 text-base text-muted-foreground">Pick up {dayDate}</p>}
 
           {items.length > 0 && (
             <div className="paper mt-8 rounded-2xl border border-border bg-card p-6 text-left">
@@ -46,18 +49,16 @@ export default async function ConfirmationPage({
                 <span>{formatPrice(Number(subtotal))}</span>
               </div>
               <p className="mt-4 text-sm text-muted-foreground">
-                Pickup Saturday 10am–12pm at 15 Oak Street. Ring bell on arrival.
+                Pickup {dayDate ?? "Saturday"} 9:30–11:30am at 185 Boundary Road, N22 6AL. Ring
+                bell on arrival.
               </p>
             </div>
           )}
 
           <div className="mt-8 flex flex-col gap-1 text-sm text-muted-foreground">
-            {whatsapp && <p>We&apos;ve sent a summary to {whatsapp}</p>}
             <p>Collection instructions above</p>
-            <p>See you Saturday!</p>
+            <p>See you {dayOnly ?? "Saturday"}!</p>
           </div>
-
-          <p className="handwritten mt-6 text-lg">thank you for baking with us</p>
 
           <div className="mt-8">
             <ButtonLink href="/">Back Home</ButtonLink>

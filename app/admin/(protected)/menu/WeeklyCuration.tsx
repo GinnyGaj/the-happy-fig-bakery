@@ -16,6 +16,7 @@ export function WeeklyCuration({
   const [selected, setSelected] = useState<Set<string>>(
     new Set(weeklyMenu.menu_item_ids ?? [])
   );
+  const [pickupDate, setPickupDate] = useState(weeklyMenu.pickup_date ?? "");
   const [pending, startTransition] = useTransition();
   const [savedAt, setSavedAt] = useState<string | null>(weeklyMenu.published_at);
 
@@ -30,7 +31,11 @@ export function WeeklyCuration({
 
   function handleSave() {
     startTransition(async () => {
-      await publishWeeklyMenu(weeklyMenu.week_start_date, Array.from(selected));
+      await publishWeeklyMenu(
+        weeklyMenu.week_start_date,
+        Array.from(selected),
+        pickupDate || null
+      );
       setSavedAt(new Date().toISOString());
     });
   }
@@ -42,6 +47,16 @@ export function WeeklyCuration({
       </h2>
       <p className="text-sm text-muted-foreground">Week of {weeklyMenu.week_start_date}</p>
       <p className="mt-1 text-sm text-muted-foreground">Guidance: 2 fixed + 1 rotating</p>
+
+      <label className="mt-4 flex max-w-xs flex-col gap-1 text-sm">
+        Pickup date
+        <input
+          type="date"
+          value={pickupDate}
+          onChange={(e) => setPickupDate(e.target.value)}
+          className="h-10 rounded-lg border border-border bg-card px-3"
+        />
+      </label>
 
       <div className="mt-4 flex flex-col gap-2">
         {items.length === 0 && (
