@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import type { OrderItem } from "@/lib/types";
 
 const orderSchema = z.object({
@@ -48,7 +48,7 @@ export async function placeOrder(
   const { weeklyMenuId, firstName, lastName, whatsapp, specialInstructions, items } =
     parsed.data;
 
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
@@ -67,6 +67,7 @@ export async function placeOrder(
     .single();
 
   if (error) {
+    console.error("placeOrder insert failed:", error);
     return { error: "Something went wrong placing your order. Please try again." };
   }
 
