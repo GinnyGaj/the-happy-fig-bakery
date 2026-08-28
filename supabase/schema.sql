@@ -108,3 +108,25 @@ create policy "orders are admin-writable" on orders for update using (auth.role(
 
 create policy "whatsapp_settings admin only" on whatsapp_settings for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 create policy "whatsapp_logs admin only" on whatsapp_logs for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+
+-- Storage: menu item images
+insert into storage.buckets (id, name, public)
+values ('menu-images', 'menu-images', true)
+on conflict (id) do nothing;
+
+create policy "menu images are publicly readable"
+on storage.objects for select
+using (bucket_id = 'menu-images');
+
+create policy "menu images are admin-writable"
+on storage.objects for insert
+with check (bucket_id = 'menu-images' and auth.role() = 'authenticated');
+
+create policy "menu images are admin-updatable"
+on storage.objects for update
+using (bucket_id = 'menu-images' and auth.role() = 'authenticated')
+with check (bucket_id = 'menu-images' and auth.role() = 'authenticated');
+
+create policy "menu images are admin-deletable"
+on storage.objects for delete
+using (bucket_id = 'menu-images' and auth.role() = 'authenticated');

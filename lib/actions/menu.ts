@@ -13,6 +13,7 @@ export async function createMenuItem(formData: FormData) {
     name: formData.get("name") as string,
     description: (formData.get("description") as string) || null,
     price: Number(formData.get("price")),
+    image_url: (formData.get("image_url") as string) || null,
     dietary_tags,
     is_free_item: formData.get("is_free_item") === "on",
   });
@@ -32,6 +33,7 @@ export async function updateMenuItem(id: string, formData: FormData) {
       name: formData.get("name") as string,
       description: (formData.get("description") as string) || null,
       price: Number(formData.get("price")),
+      image_url: (formData.get("image_url") as string) || null,
       dietary_tags,
       is_free_item: formData.get("is_free_item") === "on",
       updated_at: new Date().toISOString(),

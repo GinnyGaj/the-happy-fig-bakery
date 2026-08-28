@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Field, Input, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { formatPrice } from "@/lib/utils";
 import { createMenuItem, updateMenuItem, deleteMenuItem } from "@/lib/actions/menu";
+import { createClient } from "@/lib/supabase/client";
 import type { DietaryTag, MenuItem } from "@/lib/types";
 
 const TAGS: DietaryTag[] = ["vegetarian", "vegan", "gluten-free", "nut-free"];
@@ -73,10 +75,40 @@ export function ItemLibrary({ items }: { items: MenuItem[] }) {
 }
 
 function ItemForm({ item, onDone }: { item: MenuItem | null; onDone: () => void }) {
+  const [imageUrl, setImageUrl] = useState(item?.image_url ?? "");
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
   async function action(formData: FormData) {
+    formData.set("image_url", imageUrl);
     if (item) await updateMenuItem(item.id, formData);
     else await createMenuItem(formData);
     onDone();
+  }
+
+  async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const supabase = createClient();
+      const ext = file.name.split(".").pop();
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from("menu-images").upload(path, file, {
+        cacheControl: "3600",
+        upsert: false,
+      });
+      if (error) throw error;
+      const { data } = supabase.storage.from("menu-images").getPublicUrl(path);
+      setImageUrl(data.publicUrl);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
   }
 
   return (
@@ -92,6 +124,40 @@ function ItemForm({ item, onDone }: { item: MenuItem | null; onDone: () => void 
       <Field label="Description" htmlFor="description">
         <Textarea id="description" name="description" defaultValue={item?.description ?? ""} />
       </Field>
+      <div>
+        <p className="text-sm font-medium">Photo</p>
+        <div className="mt-2 flex items-center gap-4">
+          {imageUrl ? (
+            <div className="relative h-20 w-20 overflow-hidden rounded-lg border border-border bg-muted">
+              <Image src={imageUrl} alt="" fill className="object-cover" />
+            </div>
+          ) : (
+            <div className="flex h-20 w-20 items-center justify-center rounded-lg border border-dashed border-border text-xs text-muted-foreground">
+              No photo
+            </div>
+          )}
+          <div className="flex flex-col gap-1">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              disabled={uploading}
+              className="text-sm"
+            />
+            {uploading && <p className="text-xs text-muted-foreground">Uploading…</p>}
+            {uploadError && <p className="text-xs text-destructive">{uploadError}</p>}
+            {imageUrl && !uploading && (
+              <button
+                type="button"
+                onClick={() => setImageUrl("")}
+                className="w-fit text-xs text-destructive underline"
+              >
+                Remove photo
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
       <div>
         <p className="text-sm font-medium">Dietary tags</p>
         <div className="mt-2 flex flex-wrap gap-4">
