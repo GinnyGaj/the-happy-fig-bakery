@@ -17,6 +17,8 @@ export function WeeklyCuration({
     new Set(weeklyMenu.menu_item_ids ?? [])
   );
   const [pickupDate, setPickupDate] = useState(weeklyMenu.pickup_date ?? "");
+  const [pickupStartTime, setPickupStartTime] = useState(weeklyMenu.pickup_start_time ?? "");
+  const [pickupEndTime, setPickupEndTime] = useState(weeklyMenu.pickup_end_time ?? "");
   const [pending, startTransition] = useTransition();
   const [savedAt, setSavedAt] = useState<string | null>(weeklyMenu.published_at);
 
@@ -34,7 +36,9 @@ export function WeeklyCuration({
       await publishWeeklyMenu(
         weeklyMenu.week_start_date,
         Array.from(selected),
-        pickupDate || null
+        pickupDate || null,
+        pickupStartTime || null,
+        pickupEndTime || null
       );
       setSavedAt(new Date().toISOString());
     });
@@ -57,6 +61,27 @@ export function WeeklyCuration({
           className="h-10 rounded-lg border border-border bg-card px-3"
         />
       </label>
+
+      <div className="mt-4 flex max-w-xs gap-4">
+        <label className="flex flex-1 flex-col gap-1 text-sm">
+          Pickup start time
+          <input
+            type="time"
+            value={pickupStartTime}
+            onChange={(e) => setPickupStartTime(e.target.value)}
+            className="h-10 rounded-lg border border-border bg-card px-3"
+          />
+        </label>
+        <label className="flex flex-1 flex-col gap-1 text-sm">
+          Pickup end time
+          <input
+            type="time"
+            value={pickupEndTime}
+            onChange={(e) => setPickupEndTime(e.target.value)}
+            className="h-10 rounded-lg border border-border bg-card px-3"
+          />
+        </label>
+      </div>
 
       <div className="mt-4 flex flex-col gap-2">
         {items.length === 0 && (

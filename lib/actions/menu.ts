@@ -54,7 +54,9 @@ export async function deleteMenuItem(id: string) {
 export async function publishWeeklyMenu(
   weekStartDate: string,
   menuItemIds: string[],
-  pickupDate: string | null
+  pickupDate: string | null,
+  pickupStartTime: string | null,
+  pickupEndTime: string | null
 ) {
   const supabase = await createClient();
 
@@ -70,6 +72,8 @@ export async function publishWeeklyMenu(
       .update({
         menu_item_ids: menuItemIds,
         pickup_date: pickupDate,
+        pickup_start_time: pickupStartTime,
+        pickup_end_time: pickupEndTime,
         is_published: true,
         published_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -81,6 +85,8 @@ export async function publishWeeklyMenu(
       week_start_date: weekStartDate,
       menu_item_ids: menuItemIds,
       pickup_date: pickupDate,
+      pickup_start_time: pickupStartTime,
+      pickup_end_time: pickupEndTime,
       is_published: true,
       published_at: new Date().toISOString(),
     });

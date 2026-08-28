@@ -17,6 +17,8 @@ create table weekly_menus (
   id uuid primary key default gen_random_uuid(),
   week_start_date date not null unique,
   pickup_date date,
+  pickup_start_time time,
+  pickup_end_time time,
   menu_item_ids uuid[] not null default '{}',
   is_published boolean not null default false,
   form_open boolean not null default false,
@@ -69,6 +71,10 @@ create table whatsapp_logs (
   error_message text,
   sent_at timestamptz not null default now()
 );
+
+-- Migration: add pickup time window to weekly_menus (safe to re-run)
+alter table weekly_menus add column if not exists pickup_start_time time;
+alter table weekly_menus add column if not exists pickup_end_time time;
 
 -- Decrements stock for an item, floored at zero.
 create or replace function decrement_stock(
