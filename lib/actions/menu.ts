@@ -53,6 +53,16 @@ export async function updateMenuItem(id: string, formData: FormData) {
   revalidatePath("/admin/menu");
 }
 
+export async function updateItemMaxLimit(id: string, maxLimit: number | null) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("menu_items")
+    .update({ max_limit: maxLimit, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin/menu");
+}
+
 export async function deleteMenuItem(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("menu_items").delete().eq("id", id);

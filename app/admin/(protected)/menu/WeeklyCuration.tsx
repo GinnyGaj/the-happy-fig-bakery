@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { publishWeeklyMenu } from "@/lib/actions/menu";
+import { publishWeeklyMenu, updateItemMaxLimit } from "@/lib/actions/menu";
 import { Button } from "@/components/ui/Button";
 import { formatPrice } from "@/lib/utils";
 import type { MenuItem, WeeklyMenu } from "@/lib/types";
@@ -21,6 +21,9 @@ export function WeeklyCuration({
   const [pickupEndTime, setPickupEndTime] = useState(weeklyMenu.pickup_end_time ?? "");
   const [pending, startTransition] = useTransition();
   const [savedAt, setSavedAt] = useState<string | null>(weeklyMenu.published_at);
+  const [maxLimits, setMaxLimits] = useState<Record<string, string>>(
+    Object.fromEntries(items.map((item) => [item.id, item.max_limit != null ? String(item.max_limit) : ""]))
+  );
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -33,6 +36,13 @@ export function WeeklyCuration({
 
   function handleSave() {
     startTransition(async () => {
+      for (const item of items) {
+        const raw = maxLimits[item.id] ?? "";
+        const nextLimit = raw.trim() === "" ? null : Number(raw);
+        if (nextLimit !== (item.max_limit ?? null)) {
+          await updateItemMaxLimit(item.id, nextLimit);
+        }
+      }
       await publishWeeklyMenu(
         weeklyMenu.week_start_date,
         Array.from(selected),
@@ -88,11 +98,11 @@ export function WeeklyCuration({
           <p className="text-sm text-muted-foreground">Add items to your library below first.</p>
         )}
         {items.map((item) => (
-          <label
+          <div
             key={item.id}
-            className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3"
+            className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3"
           >
-            <span className="flex items-center gap-3">
+            <label className="flex flex-1 items-center gap-3">
               <input
                 type="checkbox"
                 checked={selected.has(item.id)}
@@ -100,9 +110,23 @@ export function WeeklyCuration({
                 className="h-4 w-4 accent-primary"
               />
               {item.name}
-            </span>
+            </label>
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              Max/week
+              <input
+                type="number"
+                min="0"
+                step="1"
+                placeholder="Unlimited"
+                value={maxLimits[item.id] ?? ""}
+                onChange={(e) =>
+                  setMaxLimits((prev) => ({ ...prev, [item.id]: e.target.value }))
+                }
+                className="h-8 w-24 rounded-lg border border-border bg-background px-2"
+              />
+            </label>
             <span className="text-sm text-muted-foreground">{formatPrice(item.price)}</span>
-          </label>
+          </div>
         ))}
       </div>
 
