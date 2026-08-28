@@ -142,6 +142,24 @@ async function syncStockLimits(
 
   const existingByItem = new Map((existingLimits ?? []).map((s) => [s.menu_item_id, s]));
 
+  // Ground truth for how much of each item has actually been ordered so far,
+  // used to recompute current_stock whenever the admin changes stock_limit —
+  // the running current_stock counter must never be left stale relative to it.
+  const { data: existingOrders } = await supabase
+    .from("orders")
+    .select("order_items")
+    .eq("weekly_menu_id", weeklyMenuId);
+
+  const consumedByItem = new Map<string, number>();
+  for (const order of existingOrders ?? []) {
+    for (const orderItem of order.order_items as { item_id: string; quantity: number }[]) {
+      consumedByItem.set(
+        orderItem.item_id,
+        (consumedByItem.get(orderItem.item_id) ?? 0) + orderItem.quantity
+      );
+    }
+  }
+
   for (const item of items ?? []) {
     const existing = existingByItem.get(item.id);
     if (item.max_limit == null) {
@@ -151,16 +169,22 @@ async function syncStockLimits(
       continue;
     }
     if (!existing) {
+      const consumed = consumedByItem.get(item.id) ?? 0;
       await supabase.from("stock_limits").insert({
         weekly_menu_id: weeklyMenuId,
         menu_item_id: item.id,
         stock_limit: item.max_limit,
-        current_stock: item.max_limit,
+        current_stock: Math.max(item.max_limit - consumed, 0),
       });
     } else if (existing.stock_limit !== item.max_limit) {
+      const consumed = consumedByItem.get(item.id) ?? 0;
       await supabase
         .from("stock_limits")
-        .update({ stock_limit: item.max_limit, updated_at: new Date().toISOString() })
+        .update({
+          stock_limit: item.max_limit,
+          current_stock: Math.max(item.max_limit - consumed, 0),
+          updated_at: new Date().toISOString(),
+        })
         .eq("id", existing.id);
     }
   }

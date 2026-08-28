@@ -50,56 +50,32 @@ export async function placeOrder(
 
   const supabase = createServiceClient();
 
-  const { data: stockRows } = await supabase
-    .from("stock_limits")
-    .select("menu_item_id, current_stock")
-    .eq("weekly_menu_id", weeklyMenuId)
-    .in(
-      "menu_item_id",
-      items.map((i) => i.item_id)
-    );
-
-  const stockByItem = new Map((stockRows ?? []).map((s) => [s.menu_item_id, s.current_stock]));
-
-  for (const item of items) {
-    const available = stockByItem.get(item.item_id);
-    if (available != null && item.quantity > available) {
-      return {
-        error: `Sorry, ${item.name} just sold out. Please update your order.`,
-      };
-    }
-  }
-
   const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
   const { data, error } = await supabase
-    .from("orders")
-    .insert({
-      weekly_menu_id: weeklyMenuId,
-      customer_first_name: firstName,
-      customer_last_name: lastName,
-      customer_whatsapp: whatsapp,
-      order_items: items satisfies OrderItem[],
-      order_subtotal: subtotal,
-      special_instructions: specialInstructions || null,
+    .rpc("place_order", {
+      p_weekly_menu_id: weeklyMenuId,
+      p_first_name: firstName,
+      p_last_name: lastName,
+      p_whatsapp: whatsapp,
+      p_special_instructions: specialInstructions || null,
+      p_items: items satisfies OrderItem[],
+      p_subtotal: subtotal,
     })
-    .select("id")
     .single();
 
   if (error) {
-    console.error("placeOrder insert failed:", error);
+    const soldOut = error.message.match(/SOLD_OUT:(.*)/);
+    if (soldOut) {
+      return {
+        error: `Sorry, ${soldOut[1]} just sold out. Please update your order.`,
+      };
+    }
+    console.error("placeOrder failed:", error);
     return { error: "Something went wrong placing your order. Please try again." };
   }
 
-  for (const item of items) {
-    await supabase.rpc("decrement_stock", {
-      p_weekly_menu_id: weeklyMenuId,
-      p_menu_item_id: item.item_id,
-      p_quantity: item.quantity,
-    });
-  }
-
-  return { orderId: data.id };
+  return { orderId: data as string };
 }
 
 export async function deleteOrder(orderId: string): Promise<{ error?: string }> {

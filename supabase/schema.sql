@@ -79,18 +79,62 @@ alter table weekly_menus add column if not exists pickup_end_time time;
 -- Migration: add per-item order max limit (null = unlimited) (safe to re-run)
 alter table menu_items add column if not exists max_limit integer;
 
--- Decrements stock for an item, floored at zero.
-create or replace function decrement_stock(
+-- Places an order and decrements stock atomically in a single transaction.
+-- Stock for each limited item is checked-and-decremented via a single
+-- locked UPDATE, so concurrent orders for the same item serialize instead
+-- of racing on a stale read. If any item is sold out, the whole order
+-- (including any decrements already applied in this call) is rolled back.
+create or replace function place_order(
   p_weekly_menu_id uuid,
-  p_menu_item_id uuid,
-  p_quantity integer
-) returns void as $$
+  p_first_name varchar,
+  p_last_name varchar,
+  p_whatsapp varchar,
+  p_special_instructions text,
+  p_items jsonb,
+  p_subtotal decimal
+) returns uuid as $$
+declare
+  v_order_id uuid;
+  v_item jsonb;
+  v_item_id uuid;
+  v_quantity integer;
+  v_name text;
+  v_updated integer;
 begin
-  update stock_limits
-  set current_stock = greatest(current_stock - p_quantity, 0),
-      updated_at = now()
-  where weekly_menu_id = p_weekly_menu_id
-    and menu_item_id = p_menu_item_id;
+  for v_item in select * from jsonb_array_elements(p_items)
+  loop
+    v_item_id := (v_item->>'item_id')::uuid;
+    v_quantity := (v_item->>'quantity')::integer;
+    v_name := v_item->>'name';
+
+    update stock_limits
+    set current_stock = current_stock - v_quantity,
+        updated_at = now()
+    where weekly_menu_id = p_weekly_menu_id
+      and menu_item_id = v_item_id
+      and current_stock >= v_quantity;
+
+    get diagnostics v_updated = row_count;
+
+    -- v_updated = 0 with a matching row present means insufficient stock.
+    -- No matching row at all means the item is unlimited (no stock_limits row).
+    if v_updated = 0 and exists (
+      select 1 from stock_limits
+      where weekly_menu_id = p_weekly_menu_id and menu_item_id = v_item_id
+    ) then
+      raise exception 'SOLD_OUT:%', v_name;
+    end if;
+  end loop;
+
+  insert into orders (
+    weekly_menu_id, customer_first_name, customer_last_name, customer_whatsapp,
+    order_items, order_subtotal, special_instructions
+  ) values (
+    p_weekly_menu_id, p_first_name, p_last_name, p_whatsapp,
+    p_items, p_subtotal, p_special_instructions
+  ) returning id into v_order_id;
+
+  return v_order_id;
 end;
 $$ language plpgsql;
 
