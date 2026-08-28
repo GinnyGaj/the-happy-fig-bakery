@@ -105,16 +105,10 @@ function OrderPageInner({
         <p className="mt-4 rounded-lg bg-accent px-4 py-3 text-sm">{announcement}</p>
       )}
 
-      <div className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-[1fr_360px]">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          {items.map((item) => (
-            <MenuCard key={item.id} item={item} soldOut={soldOut.has(item.id)} />
-          ))}
-        </div>
-
-        <div className="lg:sticky lg:top-24 lg:self-start">
-          <OrderSummary submitting={submitting} onSubmit={handleSubmit} />
-        </div>
+      <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2">
+        {items.map((item) => (
+          <MenuCard key={item.id} item={item} soldOut={soldOut.has(item.id)} />
+        ))}
       </div>
 
       <div className="mt-14 max-w-2xl">
@@ -146,6 +140,10 @@ function OrderPageInner({
             <Textarea id="specialInstructions" name="specialInstructions" />
           </Field>
         </form>
+      </div>
+
+      <div className="mt-14 max-w-2xl">
+        <OrderSummary submitting={submitting} onSubmit={handleSubmit} />
       </div>
     </>
   );
