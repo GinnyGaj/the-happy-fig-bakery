@@ -19,15 +19,17 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
   }, [orders, search]);
 
   function downloadCsv() {
-    const header = ["Customer Name", "WhatsApp", "Items", "Quantities", "Total", "Time"];
-    const rows = orders.map((o) => [
-      `${o.customer_first_name} ${o.customer_last_name}`,
-      o.customer_whatsapp,
-      o.order_items.map((i) => i.name).join("; "),
-      o.order_items.map((i) => i.quantity).join("; "),
-      o.order_subtotal.toFixed(2),
-      new Date(o.created_at).toLocaleString("en-GB"),
-    ]);
+    const header = ["Customer Name", "WhatsApp", "Item", "Quantity", "Item total cost", "Order time"];
+    const rows = orders.flatMap((o) =>
+      o.order_items.map((i) => [
+        `${o.customer_first_name} ${o.customer_last_name}`,
+        o.customer_whatsapp,
+        i.name,
+        i.quantity,
+        formatPrice(i.price * i.quantity),
+        new Date(o.created_at).toLocaleString("en-GB"),
+      ])
+    );
 
     const csv = [header, ...rows]
       .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
