@@ -26,6 +26,7 @@ export function OrderSummary({
   return (
     <div className="paper rounded-2xl border border-border bg-muted/50 p-5">
       <h2 className="text-xl">Your order</h2>
+      <p className="mt-1 text-sm text-muted-foreground">Pay at pickup. Card payment accepted</p>
       {lines.length === 0 ? (
         <p className="mt-3 text-sm text-muted-foreground">Nothing selected yet</p>
       ) : (
