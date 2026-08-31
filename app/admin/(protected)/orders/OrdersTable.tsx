@@ -240,6 +240,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
           <div className="flex items-center gap-2">
             <Button
               type="button"
+              variant="ghost"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
               className="h-9 bg-transparent px-3 text-sm text-foreground hover:bg-muted/50 disabled:opacity-50"
@@ -250,10 +251,11 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
               <Button
                 key={p}
                 type="button"
+                variant={p === currentPage ? "primary" : "ghost"}
                 onClick={() => setPage(p)}
                 className={`h-9 w-9 px-0 text-sm ${
                   p === currentPage
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    ? "hover:opacity-90"
                     : "bg-transparent text-foreground hover:bg-muted/50"
                 }`}
               >
@@ -262,6 +264,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
             ))}
             <Button
               type="button"
+              variant="ghost"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
               className="h-9 bg-transparent px-3 text-sm text-foreground hover:bg-muted/50 disabled:opacity-50"
