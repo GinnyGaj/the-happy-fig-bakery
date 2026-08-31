@@ -8,9 +8,16 @@ import { formatPrice } from "@/lib/utils";
 import { deleteOrder } from "@/lib/actions/orders";
 import type { Order } from "@/lib/types";
 
+// Returns the order's date as YYYY-MM-DD in UK local time, matching the "Ordered" column.
+function ukDateString(iso: string) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London" }).format(new Date(iso));
+}
+
 export function OrdersTable({ orders }: { orders: Order[] }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -32,17 +39,32 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
     router.refresh();
   }
 
-  const filtered = useMemo(() => {
+  const filteredOrders = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return orders;
-    return orders.filter((o) =>
-      `${o.customer_first_name} ${o.customer_last_name}`.toLowerCase().includes(q)
-    );
-  }, [orders, search]);
+    return orders.filter((o) => {
+      if (q && !`${o.customer_first_name} ${o.customer_last_name}`.toLowerCase().includes(q)) {
+        return false;
+      }
+      if (startDate) {
+        const orderDate = ukDateString(o.created_at);
+        if (endDate) {
+          if (orderDate < startDate || orderDate > endDate) return false;
+        } else if (orderDate !== startDate) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [orders, search, startDate, endDate]);
+
+  function clearDateFilters() {
+    setStartDate("");
+    setEndDate("");
+  }
 
   function downloadCsv() {
     const header = ["Customer Name", "WhatsApp", "Item", "Quantity", "Item total cost", "Order time"];
-    const rows = orders.flatMap((o) =>
+    const rows = filteredOrders.flatMap((o) =>
       o.order_items.map((i) => [
         `${o.customer_first_name} ${o.customer_last_name}`,
         o.customer_whatsapp,
@@ -61,7 +83,16 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `happy_fig_orders_${new Date().toISOString().slice(0, 10)}.csv`;
+
+    let filename: string;
+    if (startDate && endDate) {
+      filename = `orders_${startDate}_to_${endDate}.csv`;
+    } else if (startDate) {
+      filename = `orders_${startDate}.csv`;
+    } else {
+      filename = `happy_fig_orders_${new Date().toISOString().slice(0, 10)}.csv`;
+    }
+    link.download = filename;
     link.click();
     URL.revokeObjectURL(url);
   }
@@ -69,12 +100,41 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
   return (
     <div className="mt-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <Input
-          placeholder="Search by customer name"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="h-10 max-w-xs text-sm"
-        />
+        <div className="flex flex-wrap items-center gap-3">
+          <Input
+            placeholder="Search by customer name"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-10 max-w-xs text-sm"
+          />
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            From
+            <Input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="h-10 text-sm"
+            />
+          </label>
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            To
+            <Input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="h-10 text-sm"
+            />
+          </label>
+          {(startDate || endDate) && (
+            <Button
+              type="button"
+              onClick={clearDateFilters}
+              className="h-10 bg-transparent px-3 text-sm text-muted-foreground hover:bg-muted/50"
+            >
+              Clear
+            </Button>
+          )}
+        </div>
         <Button type="button" onClick={downloadCsv} className="h-10 px-5 text-sm">
           Download Orders as CSV
         </Button>
@@ -93,7 +153,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((order) => (
+            {filteredOrders.map((order) => (
               <Fragment key={order.id}>
                 <tr
                   onClick={() => setExpanded(expanded === order.id ? null : order.id)}
@@ -132,7 +192,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
                 )}
               </Fragment>
             ))}
-            {filtered.length === 0 && (
+            {filteredOrders.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">
                   No orders yet.
