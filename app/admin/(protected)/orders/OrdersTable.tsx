@@ -13,6 +13,8 @@ function ukDateString(iso: string) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London" }).format(new Date(iso));
 }
 
+const ORDERS_PER_PAGE = 10;
+
 export function OrdersTable({ orders }: { orders: Order[] }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
@@ -20,6 +22,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
   const [endDate, setEndDate] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   async function handleDelete(order: Order) {
     const confirmed = window.confirm(
@@ -57,9 +60,32 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
     });
   }, [orders, search, startDate, endDate]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / ORDERS_PER_PAGE));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * ORDERS_PER_PAGE,
+    currentPage * ORDERS_PER_PAGE
+  );
+
+  function updateSearch(value: string) {
+    setSearch(value);
+    setPage(1);
+  }
+
+  function updateStartDate(value: string) {
+    setStartDate(value);
+    setPage(1);
+  }
+
+  function updateEndDate(value: string) {
+    setEndDate(value);
+    setPage(1);
+  }
+
   function clearDateFilters() {
     setStartDate("");
     setEndDate("");
+    setPage(1);
   }
 
   function downloadCsv() {
@@ -104,7 +130,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
           <Input
             placeholder="Search by customer name"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => updateSearch(e.target.value)}
             className="h-10 w-full text-sm sm:w-56"
           />
           <div className="flex flex-col gap-3 sm:flex-row">
@@ -113,7 +139,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
               <Input
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(e) => updateStartDate(e.target.value)}
                 className="h-10 w-full text-sm sm:w-auto"
               />
             </label>
@@ -122,7 +148,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
               <Input
                 type="date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={(e) => updateEndDate(e.target.value)}
                 className="h-10 w-full text-sm sm:w-auto"
               />
             </label>
@@ -155,7 +181,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
             </tr>
           </thead>
           <tbody>
-            {filteredOrders.map((order) => (
+            {paginatedOrders.map((order) => (
               <Fragment key={order.id}>
                 <tr
                   onClick={() => setExpanded(expanded === order.id ? null : order.id)}
@@ -204,6 +230,47 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
           </tbody>
         </table>
       </div>
+
+      {filteredOrders.length > 0 && (
+        <div className="mt-4 flex flex-col items-center justify-between gap-3 sm:flex-row">
+          <p className="text-sm text-muted-foreground">
+            Showing {(currentPage - 1) * ORDERS_PER_PAGE + 1}–
+            {Math.min(currentPage * ORDERS_PER_PAGE, filteredOrders.length)} of {filteredOrders.length} orders
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="h-9 bg-transparent px-3 text-sm text-foreground hover:bg-muted/50 disabled:opacity-50"
+            >
+              Previous
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <Button
+                key={p}
+                type="button"
+                onClick={() => setPage(p)}
+                className={`h-9 w-9 px-0 text-sm ${
+                  p === currentPage
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "bg-transparent text-foreground hover:bg-muted/50"
+                }`}
+              >
+                {p}
+              </Button>
+            ))}
+            <Button
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="h-9 bg-transparent px-3 text-sm text-foreground hover:bg-muted/50 disabled:opacity-50"
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
