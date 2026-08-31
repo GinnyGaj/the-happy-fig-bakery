@@ -99,43 +99,45 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
 
   return (
     <div className="mt-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-end md:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
           <Input
             placeholder="Search by customer name"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-10 max-w-xs text-sm"
+            className="h-10 w-full text-sm sm:w-56"
           />
-          <label className="flex items-center gap-2 text-sm text-muted-foreground">
-            From
-            <Input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="h-10 text-sm"
-            />
-          </label>
-          <label className="flex items-center gap-2 text-sm text-muted-foreground">
-            To
-            <Input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="h-10 text-sm"
-            />
-          </label>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <label className="flex flex-col gap-1 text-sm text-muted-foreground sm:flex-row sm:items-center sm:gap-2">
+              From
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="h-10 w-full text-sm sm:w-auto"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm text-muted-foreground sm:flex-row sm:items-center sm:gap-2">
+              To
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="h-10 w-full text-sm sm:w-auto"
+              />
+            </label>
+          </div>
           {(startDate || endDate) && (
             <Button
               type="button"
               onClick={clearDateFilters}
-              className="h-10 bg-transparent px-3 text-sm text-muted-foreground hover:bg-muted/50"
+              className="h-10 w-full bg-transparent px-3 text-sm text-muted-foreground hover:bg-muted/50 sm:w-auto"
             >
               Clear
             </Button>
           )}
         </div>
-        <Button type="button" onClick={downloadCsv} className="h-10 px-5 text-sm">
+        <Button type="button" onClick={downloadCsv} className="h-10 w-full px-5 text-sm sm:w-auto">
           Download Orders as CSV
         </Button>
       </div>
