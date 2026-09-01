@@ -37,9 +37,9 @@ export default async function Home() {
             </div>
           ) : !formOpen ? (
             <>
-              <div className="mt-6 rounded-2xl border-2 border-primary bg-accent p-8 text-center">
-                <p className="text-xl font-semibold">
-                  Orders open Thursday at 6pm. Next menu coming then!
+              <div className="mt-6 rounded-lg border border-border bg-muted/40 px-5 py-3 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Pre-orders open every Thursday. Next menu coming soon!
                 </p>
               </div>
               {weeklyMenu.announcement_message && (
