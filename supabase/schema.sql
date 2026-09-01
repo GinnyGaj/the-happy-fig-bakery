@@ -104,6 +104,9 @@ where o.weekly_menu_id = wm.id and o.pickup_date is null and wm.pickup_date is n
 update orders set pickup_date = created_at::date where pickup_date is null;
 alter table orders alter column pickup_date set not null;
 
+-- Migration: track whether the pickup-day WhatsApp reminder has been sent (safe to re-run)
+alter table orders add column if not exists reminder_sent boolean not null default false;
+
 -- Places an order and decrements stock atomically in a single transaction.
 -- Stock for each limited item is checked-and-decremented via a single
 -- locked UPDATE, so concurrent orders for the same item serialize instead

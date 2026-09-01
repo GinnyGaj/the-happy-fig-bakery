@@ -94,3 +94,23 @@ export async function deleteOrder(orderId: string): Promise<{ error?: string }> 
 
   return {};
 }
+
+export async function markReminderSent(orderId: string): Promise<{ error?: string }> {
+  const parsed = z.string().uuid().safeParse(orderId);
+  if (!parsed.success) {
+    return { error: "Invalid order id." };
+  }
+
+  const supabase = createServiceClient();
+  const { error } = await supabase
+    .from("orders")
+    .update({ reminder_sent: true })
+    .eq("id", parsed.data);
+
+  if (error) {
+    console.error("markReminderSent failed:", error);
+    return { error: "Something went wrong updating reminder status." };
+  }
+
+  return {};
+}

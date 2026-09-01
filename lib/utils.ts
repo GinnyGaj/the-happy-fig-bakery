@@ -24,6 +24,12 @@ export function formatTimeOnly(timeStr: string) {
   return minutes === 0 ? `${hour12}` : `${hour12}:${String(minutes).padStart(2, "0")}`;
 }
 
+export function formatUKWhatsAppNumber(phone: string): string {
+  const digits = phone.replace(/[^\d+]/g, "").replace(/^\+/, "");
+  const stripped = digits.replace(/^0+/, "");
+  return stripped.startsWith("44") ? stripped : `44${stripped}`;
+}
+
 export function currentWeekStart(date = new Date()) {
   const d = new Date(date);
   const day = d.getDay();

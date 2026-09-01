@@ -58,6 +58,7 @@ export interface Order {
   order_subtotal: number;
   special_instructions: string | null;
   status: OrderStatus;
+  reminder_sent: boolean;
   created_at: string;
   updated_at: string;
 }

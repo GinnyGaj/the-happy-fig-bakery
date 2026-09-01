@@ -4,9 +4,24 @@ import { Fragment, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { formatPrice } from "@/lib/utils";
-import { deleteOrder } from "@/lib/actions/orders";
+import { formatPrice, formatUKWhatsAppNumber } from "@/lib/utils";
+import { deleteOrder, markReminderSent } from "@/lib/actions/orders";
 import type { Order } from "@/lib/types";
+
+const DEFAULT_REMINDER_TEMPLATE =
+  "Hi {firstName}! 🥖 Quick reminder that your Happy Fig order ({itemsSummary}) is ready for pickup today during your slot ({pickupSlot}) at our doorstep on Boundary Road. Total: {totalCost}.";
+
+function itemsSummary(order: Order) {
+  return order.order_items.map((i) => `${i.name} ×${i.quantity}`).join(", ");
+}
+
+function compileReminderMessage(order: Order, template: string, pickupSlot: string) {
+  return template
+    .replaceAll("{firstName}", order.customer_first_name)
+    .replaceAll("{itemsSummary}", itemsSummary(order))
+    .replaceAll("{pickupSlot}", pickupSlot)
+    .replaceAll("{totalCost}", formatPrice(order.order_subtotal));
+}
 
 // Returns the order's date as YYYY-MM-DD in UK local time, matching the "Ordered" column.
 function ukDateString(iso: string) {
@@ -15,14 +30,33 @@ function ukDateString(iso: string) {
 
 const ORDERS_PER_PAGE = 10;
 
-export function OrdersTable({ orders }: { orders: Order[] }) {
+export function OrdersTable({ orders, pickupSlot }: { orders: Order[]; pickupSlot: string }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [sendingId, setSendingId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [reminderTemplate, setReminderTemplate] = useState(DEFAULT_REMINDER_TEMPLATE);
+
+  async function handleSendReminder(order: Order) {
+    const message = compileReminderMessage(order, reminderTemplate, pickupSlot);
+    const phone = formatUKWhatsAppNumber(order.customer_whatsapp);
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
+
+    setSendingId(order.id);
+    const result = await markReminderSent(order.id);
+    setSendingId(null);
+
+    if (result.error) {
+      window.alert(result.error);
+      return;
+    }
+
+    router.refresh();
+  }
 
   async function handleDelete(order: Order) {
     const confirmed = window.confirm(
@@ -125,7 +159,23 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
 
   return (
     <div className="mt-6">
-      <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-end md:justify-between">
+      <div className="rounded-2xl border border-border bg-card p-4">
+        <label htmlFor="reminder-template" className="text-sm font-medium">
+          Pickup reminder message
+        </label>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Available placeholders: {"{firstName}"}, {"{itemsSummary}"}, {"{pickupSlot}"}, {"{totalCost}"}
+        </p>
+        <textarea
+          id="reminder-template"
+          value={reminderTemplate}
+          onChange={(e) => setReminderTemplate(e.target.value)}
+          rows={3}
+          className="mt-2 w-full rounded-lg border border-border bg-background p-2 text-sm"
+        />
+      </div>
+
+      <div className="mt-6 flex flex-col gap-4 md:flex-row md:flex-wrap md:items-end md:justify-between">
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
           <Input
             placeholder="Search by customer name"
@@ -199,14 +249,28 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
                     {new Date(order.created_at).toLocaleString("en-GB")}
                   </td>
                   <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                    <Button
-                      type="button"
-                      onClick={() => handleDelete(order)}
-                      disabled={deletingId === order.id}
-                      className="h-8 bg-destructive px-3 text-xs text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      {deletingId === order.id ? "Deleting..." : "Delete"}
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        onClick={() => handleSendReminder(order)}
+                        disabled={sendingId === order.id}
+                        className="h-8 bg-green-600 px-3 text-xs text-white hover:bg-green-700"
+                      >
+                        {sendingId === order.id
+                          ? "Sending..."
+                          : order.reminder_sent
+                            ? "Reminder Sent ✓ (Resend)"
+                            : "Send Reminder (WhatsApp)"}
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={() => handleDelete(order)}
+                        disabled={deletingId === order.id}
+                        className="h-8 bg-destructive px-3 text-xs text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        {deletingId === order.id ? "Deleting..." : "Delete"}
+                      </Button>
+                    </div>
                   </td>
                 </tr>
                 {expanded === order.id && (
