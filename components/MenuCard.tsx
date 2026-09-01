@@ -22,8 +22,12 @@ export function MenuCard({
 }) {
   const cart = useCartIfAvailable();
   const current = cart?.lines.find((l) => l.item.id === item.id)?.quantity ?? 0;
-  const maxQty =
+  const baseMaxQty =
     remainingStock === null ? MAX_QTY : Math.max(0, Math.min(MAX_QTY, remainingStock));
+  const otherItemsQty =
+    cart?.lines.reduce((sum, l) => (l.item.id === item.id ? sum : sum + l.quantity), 0) ?? 0;
+  const freeItemUnlocked = otherItemsQty >= 2;
+  const maxQty = item.is_free_item ? (freeItemUnlocked ? Math.min(1, baseMaxQty) : 0) : baseMaxQty;
 
   return (
     <div
@@ -47,8 +51,9 @@ export function MenuCard({
             {formatPrice(item.price)}
           </span>
         </div>
-        {item.dietary_tags.length > 0 && (
+        {(item.dietary_tags.length > 0 || (item.is_free_item && !soldOut)) && (
           <div className="flex flex-wrap gap-1.5">
+            {item.is_free_item && !soldOut && <Badge>Free</Badge>}
             {item.dietary_tags.map((tag) => (
               <Badge key={tag}>{tag}</Badge>
             ))}
@@ -57,24 +62,37 @@ export function MenuCard({
         {item.description && (
           <p className="text-sm leading-relaxed text-muted-foreground">{item.description}</p>
         )}
+        {item.is_free_item && !soldOut && (
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Add any two items to your cart and claim this sweet treat on us.
+          </p>
+        )}
         <div className="mt-auto pt-3">
           {soldOut ? (
             <Badge variant="outline">Sold out</Badge>
           ) : !readOnly ? (
-            <label className="flex items-center gap-2 text-sm text-muted-foreground">
-              Quantity
-              <Select
-                value={current}
-                onChange={(e) => cart?.setQuantity(item, Number(e.target.value))}
-                className="w-20"
-              >
-                {Array.from({ length: maxQty + 1 }, (_, i) => (
-                  <option key={i} value={i}>
-                    {i}
-                  </option>
-                ))}
-              </Select>
-            </label>
+            <div className="flex flex-col gap-1">
+              <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                Quantity
+                <Select
+                  value={current}
+                  onChange={(e) => cart?.setQuantity(item, Number(e.target.value))}
+                  className="w-20"
+                  disabled={item.is_free_item && !freeItemUnlocked}
+                >
+                  {Array.from({ length: maxQty + 1 }, (_, i) => (
+                    <option key={i} value={i}>
+                      {i}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+              {item.is_free_item && !freeItemUnlocked && (
+                <span className="text-xs text-muted-foreground">
+                  Add {2 - otherItemsQty} more item{2 - otherItemsQty === 1 ? "" : "s"} to unlock
+                </span>
+              )}
+            </div>
           ) : null}
         </div>
       </div>
