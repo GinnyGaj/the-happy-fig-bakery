@@ -3,7 +3,7 @@ const WHATSAPP_URL = "https://chat.whatsapp.com/DE2dA3z3Ga53E3TLKq6FH7";
 
 function GoogleMapsIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" aria-hidden="true">
+    <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0 sm:h-6 sm:w-6" aria-hidden="true">
       <path
         fill="#4285F4"
         d="M12 2C7.86 2 4.5 5.36 4.5 9.5c0 5.25 6.5 11.5 7 11.94a.75.75 0 0 0 1 0c.5-.44 7-6.69 7-11.94C19.5 5.36 16.14 2 12 2Z"
@@ -15,7 +15,7 @@ function GoogleMapsIcon() {
 
 function WhatsAppIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" aria-hidden="true">
+    <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0 sm:h-6 sm:w-6" aria-hidden="true">
       <circle cx="12" cy="12" r="11" fill="#25D366" />
       <path
         fill="#fff"
@@ -41,12 +41,12 @@ function ExternalLinkPill({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center gap-3 rounded-full border border-border bg-card px-5 py-2.5 shadow-sm transition-colors hover:bg-accent"
+      className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-border bg-card px-3 py-2 shadow-sm transition-colors hover:bg-accent sm:flex-none sm:gap-3 sm:px-5 sm:py-2.5"
     >
       {icon}
-      <span className="text-left leading-tight">
-        <span className="block text-xs text-muted-foreground">{eyebrow}</span>
-        <span className="block text-sm font-semibold">{label}</span>
+      <span className="min-w-0 text-left leading-tight">
+        <span className="block truncate text-[11px] text-muted-foreground sm:text-xs">{eyebrow}</span>
+        <span className="block truncate text-xs font-semibold sm:text-sm">{label}</span>
       </span>
     </a>
   );
@@ -54,7 +54,7 @@ function ExternalLinkPill({
 
 export function ExternalLinkButtons() {
   return (
-    <div className="mt-4 flex flex-wrap gap-3">
+    <div className="mt-4 flex flex-nowrap gap-2 sm:gap-3">
       <ExternalLinkPill
         href={MAPS_URL}
         icon={<GoogleMapsIcon />}
