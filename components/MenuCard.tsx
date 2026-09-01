@@ -76,6 +76,17 @@ export function MenuCard({
             <Badge variant="outline">Sold out</Badge>
           ) : !readOnly ? (
             <div className="flex flex-col gap-1.5">
+              {item.is_free_item && !freeItemUnlocked && (
+                <span className="inline-flex w-fit items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                  🔒 Add {2 - otherItemsQty} more item{2 - otherItemsQty === 1 ? "" : "s"} to
+                  unlock
+                </span>
+              )}
+              {item.is_free_item && freeItemUnlocked && (
+                <span className="inline-flex w-fit items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
+                  ✓ Unlocked — pick your free treat
+                </span>
+              )}
               <label className="flex items-center gap-2 text-sm text-muted-foreground">
                 Quantity
                 <Select
@@ -95,23 +106,7 @@ export function MenuCard({
                     </option>
                   ))}
                 </Select>
-                {item.is_free_item && !freeItemUnlocked && (
-                  <span aria-hidden="true" title="Locked">
-                    🔒
-                  </span>
-                )}
               </label>
-              {item.is_free_item && !freeItemUnlocked && (
-                <span className="inline-flex w-fit items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                  🔒 Add {2 - otherItemsQty} more item{2 - otherItemsQty === 1 ? "" : "s"} to
-                  unlock
-                </span>
-              )}
-              {item.is_free_item && freeItemUnlocked && (
-                <span className="inline-flex w-fit items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
-                  ✓ Unlocked — pick your free treat
-                </span>
-              )}
             </div>
           ) : null}
         </div>
