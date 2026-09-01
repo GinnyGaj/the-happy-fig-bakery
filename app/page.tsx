@@ -1,6 +1,5 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { ExternalLinkButtons } from "@/components/ExternalLinkButtons";
 import { ButtonLink } from "@/components/ui/Button";
 import { MenuCard } from "@/components/MenuCard";
 import { getCurrentWeeklyMenu } from "@/lib/queries";
@@ -28,8 +27,6 @@ export default async function Home() {
           <h1 className="text-4xl">
             This week&apos;s menu{dayDate ? ` (${dayDate})` : ""}
           </h1>
-
-          <ExternalLinkButtons />
 
           {!weeklyMenu || items.length === 0 ? (
             <div className="mt-10 rounded-2xl border border-border bg-card p-8 text-center">
