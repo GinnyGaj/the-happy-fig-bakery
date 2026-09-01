@@ -31,8 +31,12 @@ export function MenuCard({
 
   return (
     <div
-      className={`paper flex flex-col overflow-hidden rounded-2xl border border-border bg-card ${
-        soldOut ? "opacity-50 grayscale" : ""
+      className={`paper flex flex-col overflow-hidden rounded-2xl border bg-card ${
+        soldOut
+          ? "border-border opacity-50 grayscale"
+          : item.is_free_item && freeItemUnlocked
+            ? "border-primary ring-1 ring-primary"
+            : "border-border"
       }`}
     >
       <div className="relative aspect-4/3 w-full bg-muted">
@@ -71,7 +75,7 @@ export function MenuCard({
           {soldOut ? (
             <Badge variant="outline">Sold out</Badge>
           ) : !readOnly ? (
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1.5">
               <label className="flex items-center gap-2 text-sm text-muted-foreground">
                 Quantity
                 <Select
@@ -79,6 +83,11 @@ export function MenuCard({
                   onChange={(e) => cart?.setQuantity(item, Number(e.target.value))}
                   className="w-20"
                   disabled={item.is_free_item && !freeItemUnlocked}
+                  aria-label={
+                    item.is_free_item && !freeItemUnlocked
+                      ? "Quantity (locked)"
+                      : "Quantity"
+                  }
                 >
                   {Array.from({ length: maxQty + 1 }, (_, i) => (
                     <option key={i} value={i}>
@@ -86,10 +95,21 @@ export function MenuCard({
                     </option>
                   ))}
                 </Select>
+                {item.is_free_item && !freeItemUnlocked && (
+                  <span aria-hidden="true" title="Locked">
+                    🔒
+                  </span>
+                )}
               </label>
               {item.is_free_item && !freeItemUnlocked && (
-                <span className="text-xs text-muted-foreground">
-                  Add {2 - otherItemsQty} more item{2 - otherItemsQty === 1 ? "" : "s"} to unlock
+                <span className="inline-flex w-fit items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                  🔒 Add {2 - otherItemsQty} more item{2 - otherItemsQty === 1 ? "" : "s"} to
+                  unlock
+                </span>
+              )}
+              {item.is_free_item && freeItemUnlocked && (
+                <span className="inline-flex w-fit items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
+                  ✓ Unlocked — pick your free treat
                 </span>
               )}
             </div>
