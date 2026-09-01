@@ -119,7 +119,9 @@ export async function publishWeeklyMenu(
     .single();
   const weeklyMenuId = existingMenu!.id as string;
 
-  await syncStockLimits(supabase, weeklyMenuId, menuItemIds);
+  if (pickupDate) {
+    await syncStockLimits(supabase, weeklyMenuId, menuItemIds, pickupDate);
+  }
 
   revalidatePath("/admin/menu");
   revalidatePath("/");
@@ -128,27 +130,34 @@ export async function publishWeeklyMenu(
 async function syncStockLimits(
   supabase: Awaited<ReturnType<typeof createClient>>,
   weeklyMenuId: string,
-  menuItemIds: string[]
+  menuItemIds: string[],
+  pickupDate: string
 ) {
   const { data: items } = await supabase
     .from("menu_items")
     .select("id, max_limit")
     .in("id", menuItemIds.length > 0 ? menuItemIds : [""]);
 
+  // Scoped to this pickup date, not just the weekly menu: republishing the
+  // same week's row with a new pickup date must start a fresh counter
+  // rather than carrying over the previous pickup date's orders/stock.
   const { data: existingLimits } = await supabase
     .from("stock_limits")
     .select("id, menu_item_id, stock_limit")
-    .eq("weekly_menu_id", weeklyMenuId);
+    .eq("weekly_menu_id", weeklyMenuId)
+    .eq("pickup_date", pickupDate);
 
   const existingByItem = new Map((existingLimits ?? []).map((s) => [s.menu_item_id, s]));
 
-  // Ground truth for how much of each item has actually been ordered so far,
-  // used to recompute current_stock whenever the admin changes stock_limit —
-  // the running current_stock counter must never be left stale relative to it.
+  // Ground truth for how much of each item has actually been ordered so far
+  // for this pickup date, used to recompute current_stock whenever the admin
+  // changes stock_limit — the running current_stock counter must never be
+  // left stale relative to it.
   const { data: existingOrders } = await supabase
     .from("orders")
     .select("order_items")
-    .eq("weekly_menu_id", weeklyMenuId);
+    .eq("weekly_menu_id", weeklyMenuId)
+    .eq("pickup_date", pickupDate);
 
   const consumedByItem = new Map<string, number>();
   for (const order of existingOrders ?? []) {
@@ -173,6 +182,7 @@ async function syncStockLimits(
       await supabase.from("stock_limits").insert({
         weekly_menu_id: weeklyMenuId,
         menu_item_id: item.id,
+        pickup_date: pickupDate,
         stock_limit: item.max_limit,
         current_stock: Math.max(item.max_limit - consumed, 0),
       });

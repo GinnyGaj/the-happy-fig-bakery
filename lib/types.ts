@@ -32,6 +32,7 @@ export interface StockLimit {
   id: string;
   weekly_menu_id: string;
   menu_item_id: string;
+  pickup_date: string;
   stock_limit: number;
   current_stock: number;
   updated_at: string;
@@ -49,6 +50,7 @@ export type OrderStatus = "pending" | "ready" | "collected";
 export interface Order {
   id: string;
   weekly_menu_id: string;
+  pickup_date: string;
   customer_first_name: string;
   customer_last_name: string;
   customer_whatsapp: string;

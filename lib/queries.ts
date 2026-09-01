@@ -26,10 +26,14 @@ export async function getCurrentWeeklyMenu(): Promise<{
     .select("*")
     .in("id", weeklyMenu.menu_item_ids ?? []);
 
-  const { data: stock } = await supabase
+  const stockQuery = supabase
     .from("stock_limits")
     .select("*")
     .eq("weekly_menu_id", weeklyMenu.id);
+  if (weeklyMenu.pickup_date) {
+    stockQuery.eq("pickup_date", weeklyMenu.pickup_date);
+  }
+  const { data: stock } = await stockQuery;
 
   return {
     weeklyMenu: weeklyMenu as WeeklyMenu,

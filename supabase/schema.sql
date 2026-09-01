@@ -32,15 +32,17 @@ create table stock_limits (
   id uuid primary key default gen_random_uuid(),
   weekly_menu_id uuid not null references weekly_menus(id) on delete cascade,
   menu_item_id uuid not null references menu_items(id) on delete cascade,
+  pickup_date date not null,
   stock_limit integer not null,
   current_stock integer not null,
   updated_at timestamptz not null default now(),
-  unique (weekly_menu_id, menu_item_id)
+  unique (weekly_menu_id, menu_item_id, pickup_date)
 );
 
 create table orders (
   id uuid primary key default gen_random_uuid(),
   weekly_menu_id uuid not null references weekly_menus(id) on delete cascade,
+  pickup_date date not null,
   customer_first_name varchar(255) not null,
   customer_last_name varchar(255) not null,
   customer_whatsapp varchar(20) not null,
@@ -79,6 +81,29 @@ alter table weekly_menus add column if not exists pickup_end_time time;
 -- Migration: add per-item order max limit (null = unlimited) (safe to re-run)
 alter table menu_items add column if not exists max_limit integer;
 
+-- Migration: scope stock counters and orders to pickup_date, not just
+-- weekly_menu_id, so republishing the same week's row with a new pickup
+-- date starts a fresh order count instead of carrying over the old one
+-- (safe to re-run).
+alter table stock_limits add column if not exists pickup_date date;
+update stock_limits sl
+set pickup_date = wm.pickup_date
+from weekly_menus wm
+where sl.weekly_menu_id = wm.id and sl.pickup_date is null and wm.pickup_date is not null;
+delete from stock_limits where pickup_date is null;
+alter table stock_limits alter column pickup_date set not null;
+alter table stock_limits drop constraint if exists stock_limits_weekly_menu_id_menu_item_id_key;
+alter table stock_limits add constraint stock_limits_weekly_menu_id_menu_item_id_pickup_date_key
+  unique (weekly_menu_id, menu_item_id, pickup_date);
+
+alter table orders add column if not exists pickup_date date;
+update orders o
+set pickup_date = wm.pickup_date
+from weekly_menus wm
+where o.weekly_menu_id = wm.id and o.pickup_date is null and wm.pickup_date is not null;
+update orders set pickup_date = created_at::date where pickup_date is null;
+alter table orders alter column pickup_date set not null;
+
 -- Places an order and decrements stock atomically in a single transaction.
 -- Stock for each limited item is checked-and-decremented via a single
 -- locked UPDATE, so concurrent orders for the same item serialize instead
@@ -95,12 +120,15 @@ create or replace function place_order(
 ) returns uuid as $$
 declare
   v_order_id uuid;
+  v_pickup_date date;
   v_item jsonb;
   v_item_id uuid;
   v_quantity integer;
   v_name text;
   v_updated integer;
 begin
+  select pickup_date into v_pickup_date from weekly_menus where id = p_weekly_menu_id;
+
   for v_item in select * from jsonb_array_elements(p_items)
   loop
     v_item_id := (v_item->>'item_id')::uuid;
@@ -112,6 +140,7 @@ begin
         updated_at = now()
     where weekly_menu_id = p_weekly_menu_id
       and menu_item_id = v_item_id
+      and pickup_date = v_pickup_date
       and current_stock >= v_quantity;
 
     get diagnostics v_updated = row_count;
@@ -120,17 +149,17 @@ begin
     -- No matching row at all means the item is unlimited (no stock_limits row).
     if v_updated = 0 and exists (
       select 1 from stock_limits
-      where weekly_menu_id = p_weekly_menu_id and menu_item_id = v_item_id
+      where weekly_menu_id = p_weekly_menu_id and menu_item_id = v_item_id and pickup_date = v_pickup_date
     ) then
       raise exception 'SOLD_OUT:%', v_name;
     end if;
   end loop;
 
   insert into orders (
-    weekly_menu_id, customer_first_name, customer_last_name, customer_whatsapp,
+    weekly_menu_id, pickup_date, customer_first_name, customer_last_name, customer_whatsapp,
     order_items, order_subtotal, special_instructions
   ) values (
-    p_weekly_menu_id, p_first_name, p_last_name, p_whatsapp,
+    p_weekly_menu_id, v_pickup_date, p_first_name, p_last_name, p_whatsapp,
     p_items, p_subtotal, p_special_instructions
   ) returning id into v_order_id;
 
@@ -144,12 +173,13 @@ $$ language plpgsql;
 create or replace function delete_order(p_order_id uuid) returns void as $$
 declare
   v_weekly_menu_id uuid;
+  v_pickup_date date;
   v_order_items jsonb;
   v_item jsonb;
   v_item_id uuid;
   v_quantity integer;
 begin
-  select weekly_menu_id, order_items into v_weekly_menu_id, v_order_items
+  select weekly_menu_id, pickup_date, order_items into v_weekly_menu_id, v_pickup_date, v_order_items
   from orders
   where id = p_order_id;
 
@@ -166,7 +196,8 @@ begin
     set current_stock = least(stock_limit, current_stock + v_quantity),
         updated_at = now()
     where weekly_menu_id = v_weekly_menu_id
-      and menu_item_id = v_item_id;
+      and menu_item_id = v_item_id
+      and pickup_date = v_pickup_date;
   end loop;
 
   delete from orders where id = p_order_id;
