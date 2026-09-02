@@ -252,3 +252,207 @@ with check (bucket_id = 'menu-images' and auth.role() = 'authenticated');
 create policy "menu images are admin-deletable"
 on storage.objects for delete
 using (bucket_id = 'menu-images' and auth.role() = 'authenticated');
+
+-- Migration: Inventory, batch tracking & expense management (safe to re-run)
+
+create table if not exists inventory_items (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  category text not null, -- InventoryCategory union, see lib/types.ts
+  unit text not null,     -- InventoryUnit union
+  low_stock_threshold numeric not null default 0,
+  notes text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists expenses (
+  id uuid primary key default gen_random_uuid(),
+  expense_date date not null,
+  vendor text,
+  total_cost numeric not null default 0,
+  receipt_photo_path text, -- object path in the private 'receipts' bucket, signed on read
+  notes text,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists inventory_batches (
+  id uuid primary key default gen_random_uuid(),
+  inventory_item_id uuid not null references inventory_items(id) on delete cascade,
+  expense_id uuid references expenses(id) on delete set null,
+  quantity_purchased numeric not null,
+  quantity_remaining numeric not null,
+  unit_cost numeric,
+  purchase_date date not null default current_date,
+  expiry_date date,
+  is_active boolean not null default true, -- false once quantity_remaining hits 0
+  created_at timestamptz not null default now()
+);
+
+create table if not exists expense_items (
+  id uuid primary key default gen_random_uuid(),
+  expense_id uuid not null references expenses(id) on delete cascade,
+  inventory_item_id uuid not null references inventory_items(id),
+  inventory_batch_id uuid references inventory_batches(id) on delete set null,
+  quantity numeric not null,
+  cost numeric not null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists inventory_usage_logs (
+  id uuid primary key default gen_random_uuid(),
+  inventory_item_id uuid not null references inventory_items(id) on delete cascade,
+  quantity_used numeric not null,
+  previous_total numeric not null,
+  newly_purchased numeric not null default 0,
+  new_total numeric not null,
+  logged_at timestamptz not null default now(),
+  notes text
+);
+
+create index if not exists idx_inventory_batches_item on inventory_batches(inventory_item_id);
+create index if not exists idx_inventory_batches_active on inventory_batches(inventory_item_id, is_active, purchase_date);
+create index if not exists idx_expense_items_expense on expense_items(expense_id);
+create index if not exists idx_expense_items_item on expense_items(inventory_item_id);
+create index if not exists idx_usage_logs_item on inventory_usage_logs(inventory_item_id, logged_at desc);
+
+-- Aggregated stock + status per item — status logic lives here once so the
+-- table listing and future recipe-costing work read the same numbers.
+create or replace view inventory_stock_status as
+select
+  i.id as inventory_item_id,
+  i.name,
+  i.category,
+  i.unit,
+  i.low_stock_threshold,
+  coalesce(sum(b.quantity_remaining) filter (where b.is_active), 0) as current_stock,
+  case
+    when coalesce(sum(b.quantity_remaining) filter (where b.is_active), 0) <= 0 then 'out_of_stock'
+    when coalesce(sum(b.quantity_remaining) filter (where b.is_active), 0) <= i.low_stock_threshold then 'need_to_buy'
+    else 'in_stock'
+  end as status
+from inventory_items i
+left join inventory_batches b on b.inventory_item_id = i.id
+group by i.id, i.name, i.category, i.unit, i.low_stock_threshold;
+
+-- Query as the calling role's RLS, not the view owner's (avoids the
+-- Supabase "Security Definer View" advisory — views default to running
+-- with the definer's privileges unless this is set).
+alter view inventory_stock_status set (security_invoker = true);
+
+-- Logs one purchase batch (called from the logPurchase action for each
+-- expense_item row).
+create or replace function add_inventory_batch(
+  p_inventory_item_id uuid,
+  p_expense_id uuid,
+  p_quantity numeric,
+  p_unit_cost numeric,
+  p_purchase_date date,
+  p_expiry_date date
+) returns uuid as $$
+declare
+  v_batch_id uuid;
+begin
+  insert into inventory_batches (
+    inventory_item_id, expense_id, quantity_purchased, quantity_remaining,
+    unit_cost, purchase_date, expiry_date, is_active
+  ) values (
+    p_inventory_item_id, p_expense_id, p_quantity, p_quantity,
+    p_unit_cost, p_purchase_date, p_expiry_date, p_quantity > 0
+  ) returning id into v_batch_id;
+
+  return v_batch_id;
+end;
+$$ language plpgsql;
+
+-- Quick post-bake audit: admin supplies the new counted total for an item.
+-- used = previous_total - new_total, deducted FIFO (oldest purchase_date
+-- first) across active batches, locking rows via `for update` so concurrent
+-- audits on the same item serialize instead of racing — analogous to
+-- place_order's locked stock decrement.
+create or replace function post_bake_audit(
+  p_inventory_item_id uuid,
+  p_new_total numeric,
+  p_notes text default null
+) returns uuid as $$
+declare
+  v_previous_total numeric;
+  v_to_deduct numeric;
+  v_used numeric;
+  v_log_id uuid;
+  v_batch record;
+  v_take numeric;
+begin
+  select coalesce(sum(quantity_remaining), 0) into v_previous_total
+  from inventory_batches
+  where inventory_item_id = p_inventory_item_id and is_active;
+
+  v_used := v_previous_total - p_new_total;
+  if v_used < 0 then
+    raise exception 'NEW_TOTAL_EXCEEDS_STOCK: new total (%) is greater than current stock (%)', p_new_total, v_previous_total;
+  end if;
+
+  v_to_deduct := v_used;
+
+  for v_batch in
+    select id, quantity_remaining
+    from inventory_batches
+    where inventory_item_id = p_inventory_item_id and is_active and quantity_remaining > 0
+    order by purchase_date asc, created_at asc
+    for update
+  loop
+    exit when v_to_deduct <= 0;
+    v_take := least(v_batch.quantity_remaining, v_to_deduct);
+
+    update inventory_batches
+    set quantity_remaining = quantity_remaining - v_take,
+        is_active = (quantity_remaining - v_take) > 0
+    where id = v_batch.id;
+
+    v_to_deduct := v_to_deduct - v_take;
+  end loop;
+
+  insert into inventory_usage_logs (
+    inventory_item_id, quantity_used, previous_total, newly_purchased, new_total, notes
+  ) values (
+    p_inventory_item_id, v_used, v_previous_total, 0, p_new_total, p_notes
+  ) returning id into v_log_id;
+
+  return v_log_id;
+end;
+$$ language plpgsql;
+
+-- Row-Level Security
+alter table inventory_items enable row level security;
+alter table inventory_batches enable row level security;
+alter table expenses enable row level security;
+alter table expense_items enable row level security;
+alter table inventory_usage_logs enable row level security;
+
+create policy "inventory_items admin only" on inventory_items for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "inventory_batches admin only" on inventory_batches for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "expenses admin only" on expenses for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "expense_items admin only" on expense_items for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "inventory_usage_logs admin only" on inventory_usage_logs for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+
+-- Storage: receipt photos (private — signed URLs only, unlike public menu-images bucket)
+insert into storage.buckets (id, name, public)
+values ('receipts', 'receipts', false)
+on conflict (id) do nothing;
+
+create policy "receipts are admin-readable"
+on storage.objects for select
+using (bucket_id = 'receipts' and auth.role() = 'authenticated');
+
+create policy "receipts are admin-writable"
+on storage.objects for insert
+with check (bucket_id = 'receipts' and auth.role() = 'authenticated');
+
+create policy "receipts are admin-updatable"
+on storage.objects for update
+using (bucket_id = 'receipts' and auth.role() = 'authenticated')
+with check (bucket_id = 'receipts' and auth.role() = 'authenticated');
+
+create policy "receipts are admin-deletable"
+on storage.objects for delete
+using (bucket_id = 'receipts' and auth.role() = 'authenticated');

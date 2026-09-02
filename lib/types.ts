@@ -63,6 +63,93 @@ export interface Order {
   updated_at: string;
 }
 
+export type InventoryCategory =
+  | "Dairy & Fresh"
+  | "Dry Goods & Bulk"
+  | "Spices & Flavors"
+  | "Packaging & Paper"
+  | "Consumables";
+
+export type InventoryUnit =
+  | "g"
+  | "kg"
+  | "ml"
+  | "l"
+  | "count"
+  | "tsp"
+  | "tbsp"
+  | "pack"
+  | "roll"
+  | "box";
+
+export type StockStatus = "in_stock" | "need_to_buy" | "out_of_stock";
+
+export interface InventoryItem {
+  id: string;
+  name: string;
+  category: InventoryCategory;
+  unit: InventoryUnit;
+  low_stock_threshold: number;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InventoryBatch {
+  id: string;
+  inventory_item_id: string;
+  expense_id: string | null;
+  quantity_purchased: number;
+  quantity_remaining: number;
+  unit_cost: number | null;
+  purchase_date: string;
+  expiry_date: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface Expense {
+  id: string;
+  expense_date: string;
+  vendor: string | null;
+  total_cost: number;
+  receipt_photo_path: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface ExpenseItem {
+  id: string;
+  expense_id: string;
+  inventory_item_id: string;
+  inventory_batch_id: string | null;
+  quantity: number;
+  cost: number;
+  created_at: string;
+}
+
+export interface InventoryUsageLog {
+  id: string;
+  inventory_item_id: string;
+  quantity_used: number;
+  previous_total: number;
+  newly_purchased: number;
+  new_total: number;
+  logged_at: string;
+  notes: string | null;
+}
+
+// Row shape returned by the `inventory_stock_status` view.
+export interface InventoryStockStatus {
+  inventory_item_id: string;
+  name: string;
+  category: InventoryCategory;
+  unit: InventoryUnit;
+  low_stock_threshold: number;
+  current_stock: number;
+  status: StockStatus;
+}
+
 export interface WhatsappSettings {
   id: string;
   collection_instructions: string | null;
