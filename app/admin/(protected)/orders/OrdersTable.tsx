@@ -250,26 +250,107 @@ export function OrdersTable({ orders, pickupSlot }: { orders: Order[]; pickupSlo
                   </td>
                   <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                     <div className="flex flex-wrap gap-2">
-                      <Button
+                      <button
                         type="button"
                         onClick={() => handleSendReminder(order)}
                         disabled={sendingId === order.id}
-                        className="h-8 bg-green-600 px-3 text-xs text-white hover:bg-green-700"
+                        title={
+                          order.reminder_sent
+                            ? "Reminder sent · click to resend"
+                            : "Send WhatsApp reminder"
+                        }
+                        aria-label={
+                          order.reminder_sent
+                            ? "Reminder sent, click to resend"
+                            : "Send WhatsApp reminder"
+                        }
+                        className="flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-white transition-colors hover:bg-green-700 disabled:opacity-50"
                       >
-                        {sendingId === order.id
-                          ? "Sending..."
-                          : order.reminder_sent
-                            ? "Reminder Sent ✓ (Resend)"
-                            : "Send Reminder (WhatsApp)"}
-                      </Button>
-                      <Button
+                        {sendingId === order.id ? (
+                          <svg
+                            className="h-4 w-4 animate-spin"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            />
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                            />
+                          </svg>
+                        ) : order.reminder_sent ? (
+                          <svg
+                            className="h-4 w-4"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M20 6 9 17l-5-5" />
+                          </svg>
+                        ) : (
+                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                            <path d="M12.004 2C6.486 2 2.004 6.482 2.004 12c0 1.85.5 3.583 1.372 5.07L2 22l5.09-1.335A9.943 9.943 0 0 0 12.004 22c5.518 0 10-4.482 10-10S17.522 2 12.004 2zm0 18.13a8.106 8.106 0 0 1-4.13-1.13l-.296-.176-3.07.805.82-2.997-.193-.308A8.106 8.106 0 0 1 3.87 12c0-4.487 3.647-8.13 8.134-8.13 4.486 0 8.13 3.643 8.13 8.13 0 4.486-3.644 8.13-8.13 8.13z" />
+                          </svg>
+                        )}
+                      </button>
+                      <button
                         type="button"
                         onClick={() => handleDelete(order)}
                         disabled={deletingId === order.id}
-                        className="h-8 bg-destructive px-3 text-xs text-destructive-foreground hover:bg-destructive/90"
+                        title="Delete order"
+                        aria-label="Delete order"
+                        className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive text-destructive-foreground transition-colors hover:bg-destructive/90 disabled:opacity-50"
                       >
-                        {deletingId === order.id ? "Deleting..." : "Delete"}
-                      </Button>
+                        {deletingId === order.id ? (
+                          <svg
+                            className="h-4 w-4 animate-spin"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            />
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                            />
+                          </svg>
+                        ) : (
+                          <svg
+                            className="h-4 w-4"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M3 6h18" />
+                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                            <path d="M10 11v6" />
+                            <path d="M14 11v6" />
+                          </svg>
+                        )}
+                      </button>
                     </div>
                   </td>
                 </tr>
