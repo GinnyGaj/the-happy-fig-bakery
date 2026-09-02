@@ -262,9 +262,12 @@ create table if not exists inventory_items (
   unit text not null,     -- InventoryUnit union
   low_stock_threshold numeric not null default 0,
   notes text,
+  is_active boolean not null default true, -- soft-delete: false hides item, keeps expense history intact
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table inventory_items add column if not exists is_active boolean not null default true;
 
 create table if not exists expenses (
   id uuid primary key default gen_random_uuid(),
@@ -333,6 +336,7 @@ select
   end as status
 from inventory_items i
 left join inventory_batches b on b.inventory_item_id = i.id
+where i.is_active
 group by i.id, i.name, i.category, i.unit, i.low_stock_threshold;
 
 -- Query as the calling role's RLS, not the view owner's (avoids the

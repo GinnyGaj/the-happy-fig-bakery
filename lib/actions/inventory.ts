@@ -38,9 +38,15 @@ export async function updateInventoryItem(id: string, formData: FormData) {
   revalidatePath("/admin/inventory");
 }
 
+// Soft delete: inventory_items can be referenced by expense_items with no
+// ON DELETE clause, so a hard delete fails once an item has purchase
+// history. Deactivating keeps that history intact and just hides the item.
 export async function deleteInventoryItem(id: string) {
   const supabase = await createClient();
-  const { error } = await supabase.from("inventory_items").delete().eq("id", id);
+  const { error } = await supabase
+    .from("inventory_items")
+    .update({ is_active: false, updated_at: new Date().toISOString() })
+    .eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/admin/inventory");
 }

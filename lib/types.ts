@@ -91,6 +91,7 @@ export interface InventoryItem {
   unit: InventoryUnit;
   low_stock_threshold: number;
   notes: string | null;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
 }

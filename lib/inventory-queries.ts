@@ -23,6 +23,7 @@ export async function getInventoryItems(): Promise<InventoryItem[]> {
   const { data } = await supabase
     .from("inventory_items")
     .select("*")
+    .eq("is_active", true)
     .order("category", { ascending: true })
     .order("name", { ascending: true });
   return (data ?? []) as InventoryItem[];

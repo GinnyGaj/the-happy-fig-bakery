@@ -209,7 +209,7 @@ export function InventoryTable({
                         </button>
                         <form
                           action={async () => {
-                            if (confirm(`Delete ${item.name}? This also removes its batches.`)) {
+                            if (confirm(`Remove ${item.name} from the active inventory list? Its purchase and usage history will be kept.`)) {
                               await deleteInventoryItem(item.inventory_item_id);
                             }
                           }}
