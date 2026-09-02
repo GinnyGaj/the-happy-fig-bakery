@@ -249,7 +249,7 @@ export function OrdersTable({ orders, pickupSlot }: { orders: Order[]; pickupSlo
                     {new Date(order.created_at).toLocaleString("en-GB")}
                   </td>
                   <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-nowrap items-center gap-2">
                       <button
                         type="button"
                         onClick={() => handleSendReminder(order)}
@@ -311,7 +311,7 @@ export function OrdersTable({ orders, pickupSlot }: { orders: Order[]; pickupSlo
                         disabled={deletingId === order.id}
                         title="Delete order"
                         aria-label="Delete order"
-                        className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive text-destructive-foreground transition-colors hover:bg-destructive/90 disabled:opacity-50"
+                        className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-50"
                       >
                         {deletingId === order.id ? (
                           <svg
