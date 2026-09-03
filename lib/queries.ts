@@ -35,9 +35,13 @@ export async function getCurrentWeeklyMenu(): Promise<{
   }
   const { data: stock } = await stockQuery;
 
+  const sortedItems = ((items ?? []) as MenuItem[]).sort(
+    (a, b) => Number(a.is_free_item) - Number(b.is_free_item)
+  );
+
   return {
     weeklyMenu: weeklyMenu as WeeklyMenu,
-    items: (items ?? []) as MenuItem[],
+    items: sortedItems,
     stock: (stock ?? []) as StockLimit[],
   };
 }
