@@ -59,8 +59,6 @@ export function WeeklyCuration({
       <h2 className="text-xl">
         This week&apos;s menu {weeklyMenu.is_published ? "(Published)" : "(Draft)"}
       </h2>
-      <p className="text-sm text-muted-foreground">Week of {weeklyMenu.week_start_date}</p>
-      <p className="mt-1 text-sm text-muted-foreground">Guidance: 2 fixed + 1 rotating</p>
 
       <label className="mt-4 flex max-w-xs flex-col gap-1 text-sm">
         Pickup date
