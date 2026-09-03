@@ -57,7 +57,7 @@ export function MenuCard({
         </div>
         {(item.dietary_tags.length > 0 || (item.is_free_item && !soldOut)) && (
           <div className="flex flex-wrap gap-1.5">
-            {item.is_free_item && !soldOut && <Badge>Free</Badge>}
+            {item.is_free_item && !soldOut && <Badge>Free test bake</Badge>}
             {item.dietary_tags.map((tag) => (
               <Badge key={tag}>{tag}</Badge>
             ))}
