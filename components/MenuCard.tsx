@@ -78,8 +78,7 @@ export function MenuCard({
             <div className="flex flex-col gap-1.5">
               {item.is_free_item && !freeItemUnlocked && (
                 <span className="inline-flex w-fit items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                  🔒 Add {2 - otherItemsQty} more item{2 - otherItemsQty === 1 ? "" : "s"} to
-                  unlock
+                  🔒 Add {2 - otherItemsQty} {2 - otherItemsQty === 1 ? "more item" : "items"} to unlock
                 </span>
               )}
               {item.is_free_item && freeItemUnlocked && (
