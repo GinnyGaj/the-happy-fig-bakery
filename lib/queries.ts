@@ -93,6 +93,15 @@ export async function getOrCreateThisWeeksMenu(): Promise<WeeklyMenu> {
   return created as WeeklyMenu;
 }
 
+export async function getAllOrders() {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("orders")
+    .select("*")
+    .order("created_at", { ascending: false });
+  return data ?? [];
+}
+
 export async function getOrdersForWeek(weeklyMenuId: string) {
   const supabase = await createClient();
   const { data } = await supabase
