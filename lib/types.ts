@@ -151,6 +151,39 @@ export interface InventoryStockStatus {
   status: StockStatus;
 }
 
+export type RecipeStatus = "idea" | "draft" | "complete";
+export type RecipeStage = "pre_prep" | "prep" | "bake";
+
+export interface Recipe {
+  id: string;
+  name: string;
+  status: RecipeStatus;
+  base_yield_qty: number | null;
+  base_yield_unit: string | null;
+  tips_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RecipeIngredient {
+  id: string;
+  recipe_id: string;
+  inventory_item_id: string;
+  base_weight_grams: number;
+  bakers_percent: number;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface RecipeStep {
+  id: string;
+  recipe_id: string;
+  stage: RecipeStage;
+  step_number: number;
+  instruction: string;
+  created_at: string;
+}
+
 export interface WhatsappSettings {
   id: string;
   collection_instructions: string | null;

@@ -460,3 +460,48 @@ with check (bucket_id = 'receipts' and auth.role() = 'authenticated');
 create policy "receipts are admin-deletable"
 on storage.objects for delete
 using (bucket_id = 'receipts' and auth.role() = 'authenticated');
+
+-- Migration: Recipe management — base recipe + baker's-percentage ingredients
+-- and method-of-prep steps (safe to re-run). Ingredients link straight to
+-- inventory_items rather than a separate ingredients master, so recipe
+-- costing/inventory-usage integration can be added later without a migration.
+create table if not exists recipes (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  status text not null default 'draft', -- idea | draft | complete, see lib/types.ts RecipeStatus
+  base_yield_qty numeric,
+  base_yield_unit text,
+  tips_notes text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists recipe_ingredients (
+  id uuid primary key default gen_random_uuid(),
+  recipe_id uuid not null references recipes(id) on delete cascade,
+  inventory_item_id uuid not null references inventory_items(id),
+  base_weight_grams numeric not null,
+  bakers_percent numeric not null default 0, -- derived from base_weight_grams / flour_total * 100, recalculated on save
+  sort_order int not null default 0,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists recipe_steps (
+  id uuid primary key default gen_random_uuid(),
+  recipe_id uuid not null references recipes(id) on delete cascade,
+  stage text not null check (stage in ('pre_prep', 'prep', 'bake')),
+  step_number int not null,
+  instruction text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_recipe_ingredients_recipe on recipe_ingredients(recipe_id, sort_order);
+create index if not exists idx_recipe_steps_recipe on recipe_steps(recipe_id, stage, step_number);
+
+alter table recipes enable row level security;
+alter table recipe_ingredients enable row level security;
+alter table recipe_steps enable row level security;
+
+create policy "recipes admin only" on recipes for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "recipe_ingredients admin only" on recipe_ingredients for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "recipe_steps admin only" on recipe_steps for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
