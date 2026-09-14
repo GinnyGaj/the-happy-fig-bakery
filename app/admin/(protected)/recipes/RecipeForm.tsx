@@ -170,7 +170,7 @@ function RecipeFormFields({
       </div>
 
       <div>
-        <p className="text-sm font-medium">Ingredients</p>
+        <h3 className="text-sm font-bold uppercase tracking-wide">Ingredients</h3>
         <p className="text-xs text-muted-foreground">
           Choose one ingredient below as the 100% base — every baker&apos;s % is calculated against its weight. Use
           sections below to group ingredients (e.g. dough, frosting) — anything added here stays ungrouped.
@@ -196,7 +196,7 @@ function RecipeFormFields({
       </div>
 
       <div>
-        <p className="text-sm font-medium">Sections</p>
+        <h3 className="text-sm font-bold uppercase tracking-wide">Section</h3>
         <p className="text-xs text-muted-foreground">
           Group ingredients under a named section, e.g. &quot;Dough&quot;, &quot;Frosting&quot;, &quot;Cinnamon
           sugar&quot;.
@@ -281,7 +281,7 @@ function RecipeFormFields({
       </div>
 
       <div>
-        <p className="text-sm font-medium">Method of prep</p>
+        <h3 className="text-sm font-bold uppercase tracking-wide">Method of Preparation</h3>
         <div className="mt-3 flex flex-col gap-3">
           {steps.map((row, index) => (
             <div key={row.key} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-[140px_1fr_auto]">
@@ -334,9 +334,15 @@ function RecipeFormFields({
         </button>
       </div>
 
-      <Field label="Tips / notes" htmlFor="tips_notes">
-        <Textarea id="tips_notes" name="tips_notes" defaultValue={recipe?.tips_notes ?? undefined} />
-      </Field>
+      <div>
+        <h3 className="text-sm font-bold uppercase tracking-wide">Tips / Notes</h3>
+        <Textarea
+          id="tips_notes"
+          name="tips_notes"
+          defaultValue={recipe?.tips_notes ?? undefined}
+          className="mt-3"
+        />
+      </div>
 
       <div className="flex gap-3">
         <SubmitButton className="h-10 px-5 text-sm" loadingChildren="Saving…">
