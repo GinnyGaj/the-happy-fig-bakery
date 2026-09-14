@@ -71,7 +71,12 @@ export default async function RecipeViewPage({ params }: PageProps<"/admin/recip
                 </h3>
               )}
               <div className="overflow-x-auto rounded-2xl border border-border bg-card">
-                <table className="w-full text-sm">
+                <table className="w-full table-fixed text-sm">
+                  <colgroup>
+                    <col className="w-1/2" />
+                    <col className="w-1/4" />
+                    <col className="w-1/4" />
+                  </colgroup>
                   <thead>
                     <tr className="border-b border-border text-left text-muted-foreground">
                       <th className="px-4 py-3 font-medium">Ingredient</th>
