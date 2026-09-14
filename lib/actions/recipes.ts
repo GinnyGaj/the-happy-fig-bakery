@@ -110,7 +110,7 @@ export async function createRecipe(formData: FormData) {
             sort_order: index,
           }))
         )
-        .select("id")
+        .select("id, sort_order")
         .order("sort_order", { ascending: true });
       if (sectionsError) throw new Error(sectionsError.message);
       sectionIds = (sections ?? []).map((section) => section.id);
