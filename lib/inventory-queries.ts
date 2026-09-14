@@ -13,7 +13,6 @@ export async function getInventoryWithStock(): Promise<InventoryStockStatus[]> {
   const { data } = await supabase
     .from("inventory_stock_status")
     .select("*")
-    .order("category", { ascending: true })
     .order("name", { ascending: true });
   return (data ?? []) as InventoryStockStatus[];
 }

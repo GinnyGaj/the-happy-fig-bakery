@@ -73,6 +73,36 @@ function earliestExpiry(batches: InventoryBatch[]) {
   return dates[0] ?? null;
 }
 
+function levenshteinDistance(a: string, b: string) {
+  const dp: number[][] = Array.from({ length: a.length + 1 }, (_, i) =>
+    Array.from({ length: b.length + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0))
+  );
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      dp[i][j] =
+        a[i - 1] === b[j - 1]
+          ? dp[i - 1][j - 1]
+          : 1 + Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]);
+    }
+  }
+  return dp[a.length][b.length];
+}
+
+// Catches near-duplicate names (e.g. "egg" vs "eggs", a typo) that an exact
+// string match would miss, so admins get warned before creating a duplicate.
+function findLikelyDuplicate(name: string, existingNames: string[]) {
+  const normalized = name.trim().toLowerCase();
+  if (!normalized) return null;
+  return (
+    existingNames.find((existing) => {
+      const other = existing.trim().toLowerCase();
+      if (normalized === other) return true;
+      const threshold = Math.min(normalized.length, other.length) <= 4 ? 1 : 2;
+      return levenshteinDistance(normalized, other) <= threshold;
+    }) ?? null
+  );
+}
+
 export function InventoryTable({
   stock,
   batches,
@@ -127,6 +157,7 @@ export function InventoryTable({
       {(adding || editing) && (
         <ItemForm
           item={editing}
+          existingNames={items.map((i) => i.name)}
           onDone={() => {
             setAdding(false);
             setEditing(null);
@@ -303,12 +334,24 @@ function FilterPill({
 
 function ItemForm({
   item,
+  existingNames,
   onDone,
 }: {
   item: InventoryItem | null;
+  existingNames: string[];
   onDone: () => void;
 }) {
   async function action(formData: FormData) {
+    if (!item) {
+      const name = (formData.get("name") as string) ?? "";
+      const match = findLikelyDuplicate(name, existingNames);
+      if (match) {
+        const proceed = confirm(
+          `It seems like this ingredient already exists ("${match}"). Do you wish to add it again?`
+        );
+        if (!proceed) return;
+      }
+    }
     if (item) await updateInventoryItem(item.id, formData);
     else await createInventoryItem(formData);
     onDone();
