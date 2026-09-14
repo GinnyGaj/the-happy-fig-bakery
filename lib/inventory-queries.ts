@@ -24,7 +24,6 @@ export async function getInventoryItems(): Promise<InventoryItem[]> {
     .from("inventory_items")
     .select("*")
     .eq("is_active", true)
-    .order("category", { ascending: true })
     .order("name", { ascending: true });
   return (data ?? []) as InventoryItem[];
 }
