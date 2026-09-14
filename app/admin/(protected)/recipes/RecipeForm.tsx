@@ -18,6 +18,8 @@ interface IngredientRow {
   base_weight_grams: string;
 }
 
+const BASE_INPUT_NAME = "ingredient_is_base";
+
 interface SectionRow {
   key: number;
   name: string;
@@ -54,18 +56,19 @@ function RecipeFormFields({ items, onDone }: { items: InventoryItem[]; onDone: (
   const [steps, setSteps] = useState<StepRow[]>([
     { key: nextKey++, stage: "pre_prep", instruction: "" },
   ]);
+  const [baseKey, setBaseKey] = useState<number | null>(null);
 
   // Baker's % is a single formula-wide total across ungrouped ingredients
-  // and every section, matching the plan's flour-as-basis convention.
+  // and every section, calculated against the single ingredient the admin
+  // chose as the 100% base.
   const allIngredientRows = [...ingredients, ...sections.flatMap((section) => section.ingredients)];
-  const flourTotal = allIngredientRows
-    .filter((row) => items.find((i) => i.id === row.inventory_item_id)?.name.toLowerCase().includes("flour"))
-    .reduce((sum, row) => sum + (Number(row.base_weight_grams) || 0), 0);
+  const baseRow = allIngredientRows.find((row) => row.key === baseKey);
+  const baseTotal = Number(baseRow?.base_weight_grams) || 0;
 
   function bakersPercent(row: IngredientRow) {
     const weight = Number(row.base_weight_grams) || 0;
-    if (flourTotal <= 0) return 0;
-    return (weight / flourTotal) * 100;
+    if (baseTotal <= 0) return 0;
+    return (weight / baseTotal) * 100;
   }
 
   return (
@@ -95,7 +98,7 @@ function RecipeFormFields({ items, onDone }: { items: InventoryItem[]; onDone: (
       <div>
         <p className="text-sm font-medium">Ingredients</p>
         <p className="text-xs text-muted-foreground">
-          Baker&apos;s % is calculated against total flour weight (any ingredient named &quot;flour&quot;). Use
+          Choose one ingredient below as the 100% base — every baker&apos;s % is calculated against its weight. Use
           sections below to group ingredients (e.g. dough, frosting) — anything added here stays ungrouped.
         </p>
         <IngredientRowsEditor
@@ -104,6 +107,8 @@ function RecipeFormFields({ items, onDone }: { items: InventoryItem[]; onDone: (
           setRows={setIngredients}
           sectionIndex={-1}
           bakersPercent={bakersPercent}
+          baseKey={baseKey}
+          setBaseKey={setBaseKey}
         />
         <button
           type="button"
@@ -163,6 +168,8 @@ function RecipeFormFields({ items, onDone }: { items: InventoryItem[]; onDone: (
                 }
                 sectionIndex={sectionIndex}
                 bakersPercent={bakersPercent}
+                baseKey={baseKey}
+                setBaseKey={setBaseKey}
               />
               <button
                 type="button"
@@ -275,18 +282,33 @@ function IngredientRowsEditor({
   setRows,
   sectionIndex,
   bakersPercent,
+  baseKey,
+  setBaseKey,
 }: {
   items: InventoryItem[];
   rows: IngredientRow[];
   setRows: (update: IngredientRow[] | ((prev: IngredientRow[]) => IngredientRow[])) => void;
   sectionIndex: number;
   bakersPercent: (row: IngredientRow) => number;
+  baseKey: number | null;
+  setBaseKey: (key: number) => void;
 }) {
   return (
     <div className="mt-3 flex flex-col gap-3">
       {rows.map((row, index) => (
-        <div key={row.key} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-[1fr_140px_90px_auto]">
+        <div key={row.key} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-[auto_1fr_140px_90px_auto]">
           <input type="hidden" name="ingredient_section_index" value={sectionIndex} />
+          <input type="hidden" name="ingredient_key" value={row.key} />
+          <label className="flex items-center gap-1.5 pb-2 text-xs text-muted-foreground" title="Use as 100% base">
+            <input
+              type="radio"
+              name={BASE_INPUT_NAME}
+              value={row.key}
+              checked={baseKey === row.key}
+              onChange={() => setBaseKey(row.key)}
+            />
+            100% base
+          </label>
           <Field label="Ingredient" htmlFor={`ingredient-${row.key}`}>
             <Select
               id={`ingredient-${row.key}`}

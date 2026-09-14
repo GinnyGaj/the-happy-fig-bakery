@@ -70,7 +70,14 @@ export default async function RecipeViewPage({ params }: PageProps<"/admin/recip
                   <tbody>
                     {group.ingredients.map((ingredient) => (
                       <tr key={ingredient.id} className="border-b border-border last:border-0">
-                        <td className="px-4 py-3">{ingredient.inventory_items.name}</td>
+                        <td className="px-4 py-3">
+                          {ingredient.inventory_items.name}
+                          {ingredient.is_percent_base && (
+                            <Badge variant="outline" className="ml-2">
+                              100% base
+                            </Badge>
+                          )}
+                        </td>
                         <td className="px-4 py-3">{ingredient.base_weight_grams}g</td>
                         <td className="px-4 py-3">{ingredient.bakers_percent.toFixed(1)}%</td>
                       </tr>

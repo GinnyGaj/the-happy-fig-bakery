@@ -492,7 +492,8 @@ create table if not exists recipe_ingredients (
   section_id uuid references recipe_sections(id) on delete cascade,
   inventory_item_id uuid not null references inventory_items(id),
   base_weight_grams numeric not null,
-  bakers_percent numeric not null default 0, -- derived from base_weight_grams / flour_total * 100, recalculated on save
+  bakers_percent numeric not null default 0, -- derived from base_weight_grams / base_total * 100, recalculated on save
+  is_percent_base boolean not null default false, -- admin-chosen ingredient that counts as the 100% basis for the recipe
   sort_order int not null default 0,
   created_at timestamptz not null default now()
 );
@@ -500,6 +501,14 @@ create table if not exists recipe_ingredients (
 -- Safe to re-run: add section support to a recipe_ingredients table created
 -- before recipe_sections existed.
 alter table recipe_ingredients add column if not exists section_id uuid references recipe_sections(id) on delete cascade;
+
+-- Safe to re-run: add admin-chosen baker's %-basis flag to a recipe_ingredients
+-- table created before this feature existed.
+alter table recipe_ingredients add column if not exists is_percent_base boolean not null default false;
+
+-- Ensure at most one ingredient per recipe is marked as the 100% basis.
+create unique index if not exists idx_recipe_ingredients_one_base_per_recipe
+  on recipe_ingredients(recipe_id) where is_percent_base;
 
 create table if not exists recipe_steps (
   id uuid primary key default gen_random_uuid(),

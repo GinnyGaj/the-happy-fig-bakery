@@ -11,6 +11,7 @@ interface IngredientInput {
   inventory_item_id: string;
   base_weight_grams: number;
   section_index: number;
+  is_percent_base: boolean;
 }
 
 // One step row as submitted from the Add Recipe form.
@@ -27,12 +28,15 @@ function parseIngredients(formData: FormData): IngredientInput[] {
   const itemIds = formData.getAll("ingredient_item_id") as string[];
   const weights = formData.getAll("ingredient_weight_grams") as string[];
   const sectionIndexes = formData.getAll("ingredient_section_index") as string[];
+  const keys = formData.getAll("ingredient_key") as string[];
+  const baseKey = formData.get("ingredient_is_base") as string | null;
 
   return itemIds
     .map((inventory_item_id, i) => ({
       inventory_item_id,
       base_weight_grams: Number(weights[i]),
       section_index: sectionIndexes[i] !== "" ? Number(sectionIndexes[i]) : -1,
+      is_percent_base: baseKey !== null && keys[i] === baseKey,
     }))
     .filter((row) => row.inventory_item_id && row.base_weight_grams > 0);
 }
@@ -46,16 +50,17 @@ function parseSteps(formData: FormData): StepInput[] {
     .filter((row) => row.instruction.length > 0);
 }
 
-// Baker's percentage is expressed relative to total flour weight; recipes
-// with no ingredient tagged as flour just show 0% for every row.
-function computeBakersPercents(ingredients: IngredientInput[], flourItemIds: Set<string>) {
-  const flourTotal = ingredients
-    .filter((i) => flourItemIds.has(i.inventory_item_id))
+// Baker's percentage is expressed relative to the weight of the single
+// ingredient the admin chose as the 100% basis. Recipes with no ingredient
+// marked as the basis just show 0% for every row.
+function computeBakersPercents(ingredients: IngredientInput[]) {
+  const baseTotal = ingredients
+    .filter((i) => i.is_percent_base)
     .reduce((sum, i) => sum + i.base_weight_grams, 0);
 
   return ingredients.map((i) => ({
     ...i,
-    bakers_percent: flourTotal > 0 ? (i.base_weight_grams / flourTotal) * 100 : 0,
+    bakers_percent: baseTotal > 0 ? (i.base_weight_grams / baseTotal) * 100 : 0,
   }));
 }
 
@@ -69,22 +74,11 @@ export async function createRecipe(formData: FormData) {
   const ingredients = parseIngredients(formData);
   const steps = parseSteps(formData);
 
-  // Baker's % basis: any ingredient whose name contains "flour" counts
-  // toward the 100% total, matching the plan's flour-as-basis convention.
-  let flourItemIds = new Set<string>();
-  if (ingredients.length > 0) {
-    const { data: items } = await supabase
-      .from("inventory_items")
-      .select("id, name")
-      .in(
-        "id",
-        ingredients.map((i) => i.inventory_item_id)
-      );
-    flourItemIds = new Set(
-      (items ?? []).filter((i) => i.name.toLowerCase().includes("flour")).map((i) => i.id)
-    );
+  if (ingredients.length > 0 && !ingredients.some((i) => i.is_percent_base)) {
+    throw new Error("Choose one ingredient as the 100% baker's percentage base.");
   }
-  const ingredientsWithPercent = computeBakersPercents(ingredients, flourItemIds);
+
+  const ingredientsWithPercent = computeBakersPercents(ingredients);
 
   const { data: recipe, error } = await supabase
     .from("recipes")
@@ -126,6 +120,7 @@ export async function createRecipe(formData: FormData) {
         inventory_item_id: ingredient.inventory_item_id,
         base_weight_grams: ingredient.base_weight_grams,
         bakers_percent: ingredient.bakers_percent,
+        is_percent_base: ingredient.is_percent_base,
         sort_order: index,
       }))
     );

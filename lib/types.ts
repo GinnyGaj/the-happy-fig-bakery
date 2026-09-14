@@ -180,6 +180,7 @@ export interface RecipeIngredient {
   inventory_item_id: string;
   base_weight_grams: number;
   bakers_percent: number;
+  is_percent_base: boolean;
   sort_order: number;
   created_at: string;
 }
