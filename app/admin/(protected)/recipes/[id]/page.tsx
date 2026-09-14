@@ -16,17 +16,10 @@ const STAGE_ORDER: RecipeStage[] = ["pre_prep", "prep", "bake"];
 
 export default async function RecipeViewPage({
   params,
-  searchParams,
 }: PageProps<"/admin/recipes/[id]">) {
   const { id } = await params;
-  const { target } = await searchParams;
   const recipe = await getRecipe(id);
   if (!recipe) notFound();
-
-  const targetYield = typeof target === "string" ? Number(target) : NaN;
-  const hasValidTarget =
-    !Number.isNaN(targetYield) && targetYield > 0 && recipe.base_yield_qty != null && recipe.base_yield_qty > 0;
-  const scaleFactor = hasValidTarget ? targetYield / (recipe.base_yield_qty as number) : null;
 
   const [ingredients, sections, steps] = await Promise.all([
     getRecipeIngredients(id),
@@ -60,7 +53,22 @@ export default async function RecipeViewPage({
                 Download
               </Button>
             </a>
-            <ScaleRecipeButton baseYieldQty={recipe.base_yield_qty} baseYieldUnit={recipe.base_yield_unit} />
+            <ScaleRecipeButton
+              recipeId={recipe.id}
+              baseYieldQty={recipe.base_yield_qty}
+              baseYieldUnit={recipe.base_yield_unit}
+              ingredientGroups={ingredientGroups.map((group) => ({
+                id: group.id,
+                name: group.name,
+                ingredients: group.ingredients.map((ingredient) => ({
+                  id: ingredient.id,
+                  name: ingredient.inventory_items.name,
+                  baseWeightGrams: ingredient.base_weight_grams,
+                  bakersPercent: ingredient.bakers_percent,
+                  isPercentBase: ingredient.is_percent_base,
+                })),
+              }))}
+            />
             <Link href={`/admin/recipes/${recipe.id}/edit`}>
               <Button type="button" variant="secondary" className="h-9 px-4 text-sm">
                 Edit
@@ -125,69 +133,6 @@ export default async function RecipeViewPage({
           )}
         </div>
       </section>
-
-      {scaleFactor != null && (
-        <section>
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-xl">
-              Scaled recipe — {targetYield} {recipe.base_yield_unit}
-            </h2>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline">{scaleFactor.toFixed(3)}×</Badge>
-              <a href={`/admin/recipes/${recipe.id}/download?target=${targetYield}`}>
-                <Button type="button" variant="secondary" className="h-9 px-4 text-sm">
-                  Download scaled version
-                </Button>
-              </a>
-            </div>
-          </div>
-          <div className="mt-3 flex flex-col gap-4">
-            {ingredientGroups.map((group) => (
-              <div key={group.id ?? "ungrouped"}>
-                {group.name && (
-                  <h3 className="mb-2 text-sm font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                    {group.name}
-                  </h3>
-                )}
-                <div className="overflow-x-auto rounded-2xl border border-border bg-card">
-                  <table className="w-full table-fixed text-sm">
-                    <colgroup>
-                      <col className="w-1/2" />
-                      <col className="w-1/4" />
-                      <col className="w-1/4" />
-                    </colgroup>
-                    <thead>
-                      <tr className="border-b border-border text-left text-muted-foreground">
-                        <th className="px-4 py-3 font-medium">Ingredient</th>
-                        <th className="px-4 py-3 font-medium">Scaled weight</th>
-                        <th className="px-4 py-3 font-medium">Baker&apos;s %</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {group.ingredients.map((ingredient) => (
-                        <tr key={ingredient.id} className="border-b border-border last:border-0">
-                          <td className="px-4 py-3">
-                            {ingredient.inventory_items.name}
-                            {ingredient.is_percent_base && (
-                              <Badge variant="outline" className="ml-2">
-                                100% base
-                              </Badge>
-                            )}
-                          </td>
-                          <td className="px-4 py-3">
-                            {(ingredient.base_weight_grams * scaleFactor).toFixed(1)}g
-                          </td>
-                          <td className="px-4 py-3">{ingredient.bakers_percent.toFixed(1)}%</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
 
       <section>
         <h2 className="text-xl">Method</h2>
