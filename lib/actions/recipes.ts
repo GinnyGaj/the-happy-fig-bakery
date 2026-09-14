@@ -94,50 +94,58 @@ export async function createRecipe(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
-  // section_ids[i] is the recipe_sections.id for sectionNames[i].
-  let sectionIds: string[] = [];
-  if (sectionNames.length > 0) {
-    const { data: sections, error: sectionsError } = await supabase
-      .from("recipe_sections")
-      .insert(
-        sectionNames.map((sectionName, index) => ({
+  // From here on, any failure must delete the recipe row we just created —
+  // otherwise the admin is left with an orphaned draft that has no
+  // ingredients or steps, with no way to tell from the UI what went wrong.
+  try {
+    // section_ids[i] is the recipe_sections.id for sectionNames[i].
+    let sectionIds: string[] = [];
+    if (sectionNames.length > 0) {
+      const { data: sections, error: sectionsError } = await supabase
+        .from("recipe_sections")
+        .insert(
+          sectionNames.map((sectionName, index) => ({
+            recipe_id: recipe.id,
+            name: sectionName || `Section ${index + 1}`,
+            sort_order: index,
+          }))
+        )
+        .select("id")
+        .order("sort_order", { ascending: true });
+      if (sectionsError) throw new Error(sectionsError.message);
+      sectionIds = (sections ?? []).map((section) => section.id);
+    }
+
+    if (ingredientsWithPercent.length > 0) {
+      const { error: ingredientsError } = await supabase.from("recipe_ingredients").insert(
+        ingredientsWithPercent.map((ingredient, index) => ({
           recipe_id: recipe.id,
-          name: sectionName || `Section ${index + 1}`,
+          section_id: sectionIds[ingredient.section_index] ?? null,
+          inventory_item_id: ingredient.inventory_item_id,
+          base_weight_grams: ingredient.base_weight_grams,
+          bakers_percent: ingredient.bakers_percent,
+          is_percent_base: ingredient.is_percent_base,
           sort_order: index,
         }))
-      )
-      .select("id")
-      .order("sort_order", { ascending: true });
-    if (sectionsError) throw new Error(sectionsError.message);
-    sectionIds = (sections ?? []).map((section) => section.id);
-  }
+      );
+      if (ingredientsError) throw new Error(ingredientsError.message);
+    }
 
-  if (ingredientsWithPercent.length > 0) {
-    const { error: ingredientsError } = await supabase.from("recipe_ingredients").insert(
-      ingredientsWithPercent.map((ingredient, index) => ({
-        recipe_id: recipe.id,
-        section_id: sectionIds[ingredient.section_index] ?? null,
-        inventory_item_id: ingredient.inventory_item_id,
-        base_weight_grams: ingredient.base_weight_grams,
-        bakers_percent: ingredient.bakers_percent,
-        is_percent_base: ingredient.is_percent_base,
-        sort_order: index,
-      }))
-    );
-    if (ingredientsError) throw new Error(ingredientsError.message);
-  }
-
-  if (steps.length > 0) {
-    const stageCounters: Record<RecipeStage, number> = { pre_prep: 0, prep: 0, bake: 0 };
-    const { error: stepsError } = await supabase.from("recipe_steps").insert(
-      steps.map((step) => ({
-        recipe_id: recipe.id,
-        stage: step.stage,
-        step_number: ++stageCounters[step.stage],
-        instruction: step.instruction,
-      }))
-    );
-    if (stepsError) throw new Error(stepsError.message);
+    if (steps.length > 0) {
+      const stageCounters: Record<RecipeStage, number> = { pre_prep: 0, prep: 0, bake: 0 };
+      const { error: stepsError } = await supabase.from("recipe_steps").insert(
+        steps.map((step) => ({
+          recipe_id: recipe.id,
+          stage: step.stage,
+          step_number: ++stageCounters[step.stage],
+          instruction: step.instruction,
+        }))
+      );
+      if (stepsError) throw new Error(stepsError.message);
+    }
+  } catch (err) {
+    await supabase.from("recipes").delete().eq("id", recipe.id);
+    throw err;
   }
 
   revalidatePath("/admin/recipes");
