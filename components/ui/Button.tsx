@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import type { ButtonHTMLAttributes } from "react";
 
-type Variant = "primary" | "secondary" | "ghost";
+type Variant = "primary" | "secondary" | "ghost" | "destructive";
 
 const base =
   "inline-flex items-center justify-center rounded-full px-6 h-12 text-base font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none";
@@ -12,6 +12,8 @@ const variants: Record<Variant, string> = {
   secondary:
     "border border-primary text-primary hover:bg-primary hover:text-primary-foreground",
   ghost: "text-foreground hover:text-primary",
+  destructive:
+    "border border-destructive text-destructive hover:bg-destructive hover:text-white",
 };
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
