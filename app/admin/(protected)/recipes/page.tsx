@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
+import { ButtonLink } from "@/components/ui/Button";
 import { getAllRecipes } from "@/lib/recipe-queries";
 import { getInventoryItems } from "@/lib/inventory-queries";
 import { RecipeForm } from "./RecipeForm";
@@ -36,9 +37,13 @@ export default async function RecipesPage() {
               </div>
               <div className="flex items-center gap-3">
                 <Badge variant="outline">{recipe.status}</Badge>
-                <Link href={`/admin/recipes/${recipe.id}/edit`} className="text-sm text-primary underline">
+                <ButtonLink
+                  href={`/admin/recipes/${recipe.id}/edit`}
+                  variant="secondary"
+                  className="h-9 px-4 text-sm"
+                >
                   Edit
-                </Link>
+                </ButtonLink>
                 <DeleteRecipeButton id={recipe.id} name={recipe.name} />
               </div>
             </li>
