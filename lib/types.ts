@@ -165,9 +165,18 @@ export interface Recipe {
   updated_at: string;
 }
 
+export interface RecipeSection {
+  id: string;
+  recipe_id: string;
+  name: string;
+  sort_order: number;
+  created_at: string;
+}
+
 export interface RecipeIngredient {
   id: string;
   recipe_id: string;
+  section_id: string | null;
   inventory_item_id: string;
   base_weight_grams: number;
   bakers_percent: number;

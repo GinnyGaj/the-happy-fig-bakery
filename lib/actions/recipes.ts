@@ -5,10 +5,12 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { RecipeStage, RecipeStatus } from "@/lib/types";
 
-// One ingredient row as submitted from the Add Recipe form.
+// One ingredient row as submitted from the Add Recipe form. section_index
+// refers to the position in the section_name[] array, or -1 if ungrouped.
 interface IngredientInput {
   inventory_item_id: string;
   base_weight_grams: number;
+  section_index: number;
 }
 
 // One step row as submitted from the Add Recipe form.
@@ -17,14 +19,20 @@ interface StepInput {
   instruction: string;
 }
 
+function parseSections(formData: FormData): string[] {
+  return (formData.getAll("section_name") as string[]).map((name) => name.trim());
+}
+
 function parseIngredients(formData: FormData): IngredientInput[] {
   const itemIds = formData.getAll("ingredient_item_id") as string[];
   const weights = formData.getAll("ingredient_weight_grams") as string[];
+  const sectionIndexes = formData.getAll("ingredient_section_index") as string[];
 
   return itemIds
     .map((inventory_item_id, i) => ({
       inventory_item_id,
       base_weight_grams: Number(weights[i]),
+      section_index: sectionIndexes[i] !== "" ? Number(sectionIndexes[i]) : -1,
     }))
     .filter((row) => row.inventory_item_id && row.base_weight_grams > 0);
 }
@@ -57,6 +65,7 @@ export async function createRecipe(formData: FormData) {
   const name = formData.get("name") as string;
   if (!name?.trim()) throw new Error("Recipe name is required.");
 
+  const sectionNames = parseSections(formData);
   const ingredients = parseIngredients(formData);
   const steps = parseSteps(formData);
 
@@ -91,10 +100,29 @@ export async function createRecipe(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
+  // section_ids[i] is the recipe_sections.id for sectionNames[i].
+  let sectionIds: string[] = [];
+  if (sectionNames.length > 0) {
+    const { data: sections, error: sectionsError } = await supabase
+      .from("recipe_sections")
+      .insert(
+        sectionNames.map((sectionName, index) => ({
+          recipe_id: recipe.id,
+          name: sectionName || `Section ${index + 1}`,
+          sort_order: index,
+        }))
+      )
+      .select("id")
+      .order("sort_order", { ascending: true });
+    if (sectionsError) throw new Error(sectionsError.message);
+    sectionIds = (sections ?? []).map((section) => section.id);
+  }
+
   if (ingredientsWithPercent.length > 0) {
     const { error: ingredientsError } = await supabase.from("recipe_ingredients").insert(
       ingredientsWithPercent.map((ingredient, index) => ({
         recipe_id: recipe.id,
+        section_id: sectionIds[ingredient.section_index] ?? null,
         inventory_item_id: ingredient.inventory_item_id,
         base_weight_grams: ingredient.base_weight_grams,
         bakers_percent: ingredient.bakers_percent,

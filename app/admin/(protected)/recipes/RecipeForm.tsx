@@ -18,6 +18,12 @@ interface IngredientRow {
   base_weight_grams: string;
 }
 
+interface SectionRow {
+  key: number;
+  name: string;
+  ingredients: IngredientRow[];
+}
+
 interface StepRow {
   key: number;
   stage: RecipeStage;
@@ -44,11 +50,15 @@ function RecipeFormFields({ items, onDone }: { items: InventoryItem[]; onDone: (
   const [ingredients, setIngredients] = useState<IngredientRow[]>([
     { key: nextKey++, inventory_item_id: "", base_weight_grams: "" },
   ]);
+  const [sections, setSections] = useState<SectionRow[]>([]);
   const [steps, setSteps] = useState<StepRow[]>([
     { key: nextKey++, stage: "pre_prep", instruction: "" },
   ]);
 
-  const flourTotal = ingredients
+  // Baker's % is a single formula-wide total across ungrouped ingredients
+  // and every section, matching the plan's flour-as-basis convention.
+  const allIngredientRows = [...ingredients, ...sections.flatMap((section) => section.ingredients)];
+  const flourTotal = allIngredientRows
     .filter((row) => items.find((i) => i.id === row.inventory_item_id)?.name.toLowerCase().includes("flour"))
     .reduce((sum, row) => sum + (Number(row.base_weight_grams) || 0), 0);
 
@@ -85,56 +95,16 @@ function RecipeFormFields({ items, onDone }: { items: InventoryItem[]; onDone: (
       <div>
         <p className="text-sm font-medium">Ingredients</p>
         <p className="text-xs text-muted-foreground">
-          Baker&apos;s % is calculated against total flour weight (any ingredient named &quot;flour&quot;).
+          Baker&apos;s % is calculated against total flour weight (any ingredient named &quot;flour&quot;). Use
+          sections below to group ingredients (e.g. dough, frosting) — anything added here stays ungrouped.
         </p>
-        <div className="mt-3 flex flex-col gap-3">
-          {ingredients.map((row, index) => (
-            <div key={row.key} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-[1fr_140px_90px_auto]">
-              <Field label="Ingredient" htmlFor={`ingredient-${row.key}`}>
-                <Select
-                  id={`ingredient-${row.key}`}
-                  name="ingredient_item_id"
-                  value={row.inventory_item_id}
-                  onChange={(e) =>
-                    setIngredients((prev) =>
-                      prev.map((r, i) => (i === index ? { ...r, inventory_item_id: e.target.value } : r))
-                    )
-                  }
-                >
-                  <option value="">Select ingredient…</option>
-                  {items.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-              <Field label="Weight (g)" htmlFor={`weight-${row.key}`}>
-                <Input
-                  id={`weight-${row.key}`}
-                  name="ingredient_weight_grams"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={row.base_weight_grams}
-                  onChange={(e) =>
-                    setIngredients((prev) =>
-                      prev.map((r, i) => (i === index ? { ...r, base_weight_grams: e.target.value } : r))
-                    )
-                  }
-                />
-              </Field>
-              <div className="text-sm text-muted-foreground">{bakersPercent(row).toFixed(1)}%</div>
-              <button
-                type="button"
-                onClick={() => setIngredients((prev) => prev.filter((_, i) => i !== index))}
-                className="text-sm text-destructive underline"
-              >
-                Remove
-              </button>
-            </div>
-          ))}
-        </div>
+        <IngredientRowsEditor
+          items={items}
+          rows={ingredients}
+          setRows={setIngredients}
+          sectionIndex={-1}
+          bakersPercent={bakersPercent}
+        />
         <button
           type="button"
           onClick={() =>
@@ -143,6 +113,89 @@ function RecipeFormFields({ items, onDone }: { items: InventoryItem[]; onDone: (
           className="mt-3 text-sm text-primary underline"
         >
           Add ingredient
+        </button>
+      </div>
+
+      <div>
+        <p className="text-sm font-medium">Sections</p>
+        <p className="text-xs text-muted-foreground">
+          Group ingredients under a named section, e.g. &quot;Dough&quot;, &quot;Frosting&quot;, &quot;Cinnamon
+          sugar&quot;.
+        </p>
+        <div className="mt-3 flex flex-col gap-4">
+          {sections.map((section, sectionIndex) => (
+            <div key={section.key} className="rounded-xl border border-border p-4">
+              <div className="flex items-end gap-3">
+                <div className="flex-1">
+                  <Field label="Section name" htmlFor={`section-${section.key}`}>
+                    <Input
+                      id={`section-${section.key}`}
+                      name="section_name"
+                      placeholder="e.g. Dough"
+                      value={section.name}
+                      onChange={(e) =>
+                        setSections((prev) =>
+                          prev.map((s, i) => (i === sectionIndex ? { ...s, name: e.target.value } : s))
+                        )
+                      }
+                    />
+                  </Field>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSections((prev) => prev.filter((_, i) => i !== sectionIndex))}
+                  className="text-sm text-destructive underline"
+                >
+                  Remove section
+                </button>
+              </div>
+              <IngredientRowsEditor
+                items={items}
+                rows={section.ingredients}
+                setRows={(update) =>
+                  setSections((prev) =>
+                    prev.map((s, i) =>
+                      i === sectionIndex
+                        ? { ...s, ingredients: typeof update === "function" ? update(s.ingredients) : update }
+                        : s
+                    )
+                  )
+                }
+                sectionIndex={sectionIndex}
+                bakersPercent={bakersPercent}
+              />
+              <button
+                type="button"
+                onClick={() =>
+                  setSections((prev) =>
+                    prev.map((s, i) =>
+                      i === sectionIndex
+                        ? {
+                            ...s,
+                            ingredients: [
+                              ...s.ingredients,
+                              { key: nextKey++, inventory_item_id: "", base_weight_grams: "" },
+                            ],
+                          }
+                        : s
+                    )
+                  )
+                }
+                className="mt-3 text-sm text-primary underline"
+              >
+                Add ingredient
+              </button>
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() =>
+            setSections((prev) => [...prev, { key: nextKey++, name: "", ingredients: [] }])
+          }
+          className="mt-3 text-sm text-primary underline"
+        >
+          Add section
         </button>
       </div>
 
@@ -213,5 +266,67 @@ function RecipeFormFields({ items, onDone }: { items: InventoryItem[]; onDone: (
         </Button>
       </div>
     </form>
+  );
+}
+
+function IngredientRowsEditor({
+  items,
+  rows,
+  setRows,
+  sectionIndex,
+  bakersPercent,
+}: {
+  items: InventoryItem[];
+  rows: IngredientRow[];
+  setRows: (update: IngredientRow[] | ((prev: IngredientRow[]) => IngredientRow[])) => void;
+  sectionIndex: number;
+  bakersPercent: (row: IngredientRow) => number;
+}) {
+  return (
+    <div className="mt-3 flex flex-col gap-3">
+      {rows.map((row, index) => (
+        <div key={row.key} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-[1fr_140px_90px_auto]">
+          <input type="hidden" name="ingredient_section_index" value={sectionIndex} />
+          <Field label="Ingredient" htmlFor={`ingredient-${row.key}`}>
+            <Select
+              id={`ingredient-${row.key}`}
+              name="ingredient_item_id"
+              value={row.inventory_item_id}
+              onChange={(e) =>
+                setRows((prev) => prev.map((r, i) => (i === index ? { ...r, inventory_item_id: e.target.value } : r)))
+              }
+            >
+              <option value="">Select ingredient…</option>
+              {items.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Weight (g)" htmlFor={`weight-${row.key}`}>
+            <Input
+              id={`weight-${row.key}`}
+              name="ingredient_weight_grams"
+              type="number"
+              step="0.01"
+              min="0"
+              value={row.base_weight_grams}
+              onChange={(e) =>
+                setRows((prev) => prev.map((r, i) => (i === index ? { ...r, base_weight_grams: e.target.value } : r)))
+              }
+            />
+          </Field>
+          <div className="text-sm text-muted-foreground">{bakersPercent(row).toFixed(1)}%</div>
+          <button
+            type="button"
+            onClick={() => setRows((prev) => prev.filter((_, i) => i !== index))}
+            className="text-sm text-destructive underline"
+          >
+            Remove
+          </button>
+        </div>
+      ))}
+    </div>
   );
 }

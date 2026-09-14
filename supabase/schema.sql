@@ -476,15 +476,30 @@ create table if not exists recipes (
   updated_at timestamptz not null default now()
 );
 
+-- Optional named sections within a recipe (e.g. "Dough", "Frosting",
+-- "Cinnamon sugar"). Ingredients with a null section_id are ungrouped.
+create table if not exists recipe_sections (
+  id uuid primary key default gen_random_uuid(),
+  recipe_id uuid not null references recipes(id) on delete cascade,
+  name text not null,
+  sort_order int not null default 0,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists recipe_ingredients (
   id uuid primary key default gen_random_uuid(),
   recipe_id uuid not null references recipes(id) on delete cascade,
+  section_id uuid references recipe_sections(id) on delete cascade,
   inventory_item_id uuid not null references inventory_items(id),
   base_weight_grams numeric not null,
   bakers_percent numeric not null default 0, -- derived from base_weight_grams / flour_total * 100, recalculated on save
   sort_order int not null default 0,
   created_at timestamptz not null default now()
 );
+
+-- Safe to re-run: add section support to a recipe_ingredients table created
+-- before recipe_sections existed.
+alter table recipe_ingredients add column if not exists section_id uuid references recipe_sections(id) on delete cascade;
 
 create table if not exists recipe_steps (
   id uuid primary key default gen_random_uuid(),
@@ -495,13 +510,16 @@ create table if not exists recipe_steps (
   created_at timestamptz not null default now()
 );
 
+create index if not exists idx_recipe_sections_recipe on recipe_sections(recipe_id, sort_order);
 create index if not exists idx_recipe_ingredients_recipe on recipe_ingredients(recipe_id, sort_order);
 create index if not exists idx_recipe_steps_recipe on recipe_steps(recipe_id, stage, step_number);
 
 alter table recipes enable row level security;
+alter table recipe_sections enable row level security;
 alter table recipe_ingredients enable row level security;
 alter table recipe_steps enable row level security;
 
 create policy "recipes admin only" on recipes for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "recipe_sections admin only" on recipe_sections for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 create policy "recipe_ingredients admin only" on recipe_ingredients for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 create policy "recipe_steps admin only" on recipe_steps for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');

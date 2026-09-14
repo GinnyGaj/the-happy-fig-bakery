@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Recipe, RecipeIngredient, RecipeStep } from "@/lib/types";
+import type { Recipe, RecipeIngredient, RecipeSection, RecipeStep } from "@/lib/types";
 
 export async function getAllRecipes(): Promise<Recipe[]> {
   const supabase = await createClient();
@@ -26,6 +26,16 @@ export async function getRecipeIngredients(
     .eq("recipe_id", recipeId)
     .order("sort_order", { ascending: true });
   return (data ?? []) as (RecipeIngredient & { inventory_items: { name: string; unit: string } })[];
+}
+
+export async function getRecipeSections(recipeId: string): Promise<RecipeSection[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("recipe_sections")
+    .select("*")
+    .eq("recipe_id", recipeId)
+    .order("sort_order", { ascending: true });
+  return (data ?? []) as RecipeSection[];
 }
 
 export async function getRecipeSteps(recipeId: string): Promise<RecipeStep[]> {

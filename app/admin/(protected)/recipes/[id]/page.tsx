@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
-import { getRecipe, getRecipeIngredients, getRecipeSteps } from "@/lib/recipe-queries";
+import { getRecipe, getRecipeIngredients, getRecipeSections, getRecipeSteps } from "@/lib/recipe-queries";
 import type { RecipeStage } from "@/lib/types";
 
 const STAGE_LABELS: Record<RecipeStage, string> = {
@@ -16,7 +16,20 @@ export default async function RecipeViewPage({ params }: PageProps<"/admin/recip
   const recipe = await getRecipe(id);
   if (!recipe) notFound();
 
-  const [ingredients, steps] = await Promise.all([getRecipeIngredients(id), getRecipeSteps(id)]);
+  const [ingredients, sections, steps] = await Promise.all([
+    getRecipeIngredients(id),
+    getRecipeSections(id),
+    getRecipeSteps(id),
+  ]);
+  const ungroupedIngredients = ingredients.filter((ingredient) => !ingredient.section_id);
+  const ingredientGroups = [
+    ...(ungroupedIngredients.length > 0 ? [{ id: null, name: null, ingredients: ungroupedIngredients }] : []),
+    ...sections.map((section) => ({
+      id: section.id,
+      name: section.name,
+      ingredients: ingredients.filter((ingredient) => ingredient.section_id === section.id),
+    })),
+  ];
 
   return (
     <div className="flex max-w-3xl flex-col gap-8">
@@ -37,32 +50,39 @@ export default async function RecipeViewPage({ params }: PageProps<"/admin/recip
 
       <section>
         <h2 className="text-xl">Ingredients</h2>
-        <div className="mt-3 overflow-x-auto rounded-2xl border border-border bg-card">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border text-left text-muted-foreground">
-                <th className="px-4 py-3 font-medium">Ingredient</th>
-                <th className="px-4 py-3 font-medium">Weight</th>
-                <th className="px-4 py-3 font-medium">Baker&apos;s %</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ingredients.map((ingredient) => (
-                <tr key={ingredient.id} className="border-b border-border last:border-0">
-                  <td className="px-4 py-3">{ingredient.inventory_items.name}</td>
-                  <td className="px-4 py-3">{ingredient.base_weight_grams}g</td>
-                  <td className="px-4 py-3">{ingredient.bakers_percent.toFixed(1)}%</td>
-                </tr>
-              ))}
-              {ingredients.length === 0 && (
-                <tr>
-                  <td className="px-4 py-3 text-muted-foreground" colSpan={3}>
-                    No ingredients added.
-                  </td>
-                </tr>
+        <div className="mt-3 flex flex-col gap-4">
+          {ingredientGroups.map((group) => (
+            <div key={group.id ?? "ungrouped"}>
+              {group.name && (
+                <h3 className="mb-2 text-sm font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                  {group.name}
+                </h3>
               )}
-            </tbody>
-          </table>
+              <div className="overflow-x-auto rounded-2xl border border-border bg-card">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left text-muted-foreground">
+                      <th className="px-4 py-3 font-medium">Ingredient</th>
+                      <th className="px-4 py-3 font-medium">Weight</th>
+                      <th className="px-4 py-3 font-medium">Baker&apos;s %</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {group.ingredients.map((ingredient) => (
+                      <tr key={ingredient.id} className="border-b border-border last:border-0">
+                        <td className="px-4 py-3">{ingredient.inventory_items.name}</td>
+                        <td className="px-4 py-3">{ingredient.base_weight_grams}g</td>
+                        <td className="px-4 py-3">{ingredient.bakers_percent.toFixed(1)}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ))}
+          {ingredients.length === 0 && (
+            <p className="text-sm text-muted-foreground">No ingredients added.</p>
+          )}
         </div>
       </section>
 
