@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { getRecipe, getRecipeIngredients, getRecipeSections, getRecipeSteps } from "@/lib/recipe-queries";
+import { DeleteRecipeButton } from "./DeleteRecipeButton";
 import type { RecipeStage } from "@/lib/types";
 
 const STAGE_LABELS: Record<RecipeStage, string> = {
@@ -37,9 +39,19 @@ export default async function RecipeViewPage({ params }: PageProps<"/admin/recip
         <Link href="/admin/recipes" className="text-sm text-primary underline">
           ← All recipes
         </Link>
-        <div className="mt-2 flex items-center gap-3">
-          <h1 className="text-3xl">{recipe.name}</h1>
-          <Badge variant="outline">{recipe.status}</Badge>
+        <div className="mt-2 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl">{recipe.name}</h1>
+            <Badge variant="outline">{recipe.status}</Badge>
+          </div>
+          <div className="flex gap-2">
+            <Link href={`/admin/recipes/${recipe.id}/edit`}>
+              <Button type="button" variant="secondary" className="h-9 px-4 text-sm">
+                Edit
+              </Button>
+            </Link>
+            <DeleteRecipeButton id={recipe.id} name={recipe.name} />
+          </div>
         </div>
         {recipe.base_yield_qty != null && (
           <p className="mt-1 text-sm text-muted-foreground">

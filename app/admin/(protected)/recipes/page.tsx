@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/Badge";
 import { getAllRecipes } from "@/lib/recipe-queries";
 import { getInventoryItems } from "@/lib/inventory-queries";
 import { RecipeForm } from "./RecipeForm";
+import { DeleteRecipeButton } from "./[id]/DeleteRecipeButton";
 
 export default async function RecipesPage() {
   const [recipes, items] = await Promise.all([getAllRecipes(), getInventoryItems()]);
@@ -33,7 +34,13 @@ export default async function RecipesPage() {
                   </p>
                 )}
               </div>
-              <Badge variant="outline">{recipe.status}</Badge>
+              <div className="flex items-center gap-3">
+                <Badge variant="outline">{recipe.status}</Badge>
+                <Link href={`/admin/recipes/${recipe.id}/edit`} className="text-sm text-primary underline">
+                  Edit
+                </Link>
+                <DeleteRecipeButton id={recipe.id} name={recipe.name} />
+              </div>
             </li>
           ))}
           {recipes.length === 0 && (

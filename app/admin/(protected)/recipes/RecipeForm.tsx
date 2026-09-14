@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { Field, Input, Select, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { createRecipe } from "@/lib/actions/recipes";
-import type { InventoryItem, RecipeStage } from "@/lib/types";
+import { createRecipe, updateRecipe } from "@/lib/actions/recipes";
+import type { InventoryItem, Recipe, RecipeIngredient, RecipeSection, RecipeStage, RecipeStep } from "@/lib/types";
 
 const STAGES: { value: RecipeStage; label: string }[] = [
   { value: "pre_prep", label: "Pre-prep" },
@@ -46,17 +46,76 @@ export function RecipeForm({ items }: { items: InventoryItem[] }) {
   return <RecipeFormFields items={items} onDone={() => setAdding(false)} />;
 }
 
+type IngredientWithItem = RecipeIngredient & { inventory_items: { name: string; unit: string } };
+
+export function RecipeEditForm({
+  items,
+  recipe,
+  sections,
+  ingredients,
+  steps,
+}: {
+  items: InventoryItem[];
+  recipe: Recipe;
+  sections: RecipeSection[];
+  ingredients: IngredientWithItem[];
+  steps: RecipeStep[];
+}) {
+  return <RecipeFormFields items={items} recipe={recipe} sections={sections} ingredients={ingredients} steps={steps} />;
+}
+
 let nextKey = 1;
 
-function RecipeFormFields({ items, onDone }: { items: InventoryItem[]; onDone: () => void }) {
-  const [ingredients, setIngredients] = useState<IngredientRow[]>([
-    { key: nextKey++, inventory_item_id: "", base_weight_grams: "" },
-  ]);
-  const [sections, setSections] = useState<SectionRow[]>([]);
-  const [steps, setSteps] = useState<StepRow[]>([
-    { key: nextKey++, stage: "pre_prep", instruction: "" },
-  ]);
-  const [baseKey, setBaseKey] = useState<number | null>(null);
+function toIngredientRow(ingredient: IngredientWithItem): IngredientRow & { key: number; sectionId: string | null } {
+  return {
+    key: nextKey++,
+    inventory_item_id: ingredient.inventory_item_id,
+    base_weight_grams: String(ingredient.base_weight_grams),
+    sectionId: ingredient.section_id,
+  };
+}
+
+function RecipeFormFields({
+  items,
+  onDone,
+  recipe,
+  sections: initialSections,
+  ingredients: initialIngredients,
+  steps: initialSteps,
+}: {
+  items: InventoryItem[];
+  onDone?: () => void;
+  recipe?: Recipe;
+  sections?: RecipeSection[];
+  ingredients?: IngredientWithItem[];
+  steps?: RecipeStep[];
+}) {
+  const editing = !!recipe;
+  const seededIngredients = (initialIngredients ?? []).map(toIngredientRow);
+  const baseIngredient = (initialIngredients ?? []).find((i) => i.is_percent_base);
+  const baseSeedRow = seededIngredients.find((_, i) => (initialIngredients ?? [])[i]?.id === baseIngredient?.id);
+
+  const [ingredients, setIngredients] = useState<IngredientRow[]>(
+    seededIngredients.length > 0 || editing
+      ? seededIngredients.filter((row) => row.sectionId === null)
+      : [{ key: nextKey++, inventory_item_id: "", base_weight_grams: "" }]
+  );
+  const [sections, setSections] = useState<SectionRow[]>(
+    (initialSections ?? []).map((section) => ({
+      key: nextKey++,
+      name: section.name,
+      ingredients: seededIngredients.filter((row) => row.sectionId === section.id),
+      sectionId: section.id,
+    }))
+  );
+  const [steps, setSteps] = useState<StepRow[]>(
+    initialSteps && initialSteps.length > 0
+      ? initialSteps.map((step) => ({ key: nextKey++, stage: step.stage, instruction: step.instruction }))
+      : editing
+        ? []
+        : [{ key: nextKey++, stage: "pre_prep", instruction: "" }]
+  );
+  const [baseKey, setBaseKey] = useState<number | null>(baseSeedRow?.key ?? null);
 
   // Baker's % is a single formula-wide total across ungrouped ingredients
   // and every section, calculated against the single ingredient the admin
@@ -72,13 +131,16 @@ function RecipeFormFields({ items, onDone }: { items: InventoryItem[]; onDone: (
   }
 
   return (
-    <form action={createRecipe} className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-5">
+    <form
+      action={editing ? updateRecipe.bind(null, recipe.id) : createRecipe}
+      className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-5"
+    >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Recipe name" htmlFor="name">
-          <Input id="name" name="name" required />
+          <Input id="name" name="name" defaultValue={recipe?.name} required />
         </Field>
         <Field label="Status" htmlFor="status">
-          <Select id="status" name="status" defaultValue="draft">
+          <Select id="status" name="status" defaultValue={recipe?.status ?? "draft"}>
             <option value="idea">Idea</option>
             <option value="draft">Draft</option>
             <option value="complete">Complete</option>
@@ -88,10 +150,22 @@ function RecipeFormFields({ items, onDone }: { items: InventoryItem[]; onDone: (
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Base yield quantity" htmlFor="base_yield_qty">
-          <Input id="base_yield_qty" name="base_yield_qty" type="number" step="0.01" min="0" />
+          <Input
+            id="base_yield_qty"
+            name="base_yield_qty"
+            type="number"
+            step="0.01"
+            min="0"
+            defaultValue={recipe?.base_yield_qty ?? undefined}
+          />
         </Field>
         <Field label="Base yield unit" htmlFor="base_yield_unit">
-          <Input id="base_yield_unit" name="base_yield_unit" placeholder="e.g. cookies" />
+          <Input
+            id="base_yield_unit"
+            name="base_yield_unit"
+            placeholder="e.g. cookies"
+            defaultValue={recipe?.base_yield_unit ?? undefined}
+          />
         </Field>
       </div>
 
@@ -261,16 +335,18 @@ function RecipeFormFields({ items, onDone }: { items: InventoryItem[]; onDone: (
       </div>
 
       <Field label="Tips / notes" htmlFor="tips_notes">
-        <Textarea id="tips_notes" name="tips_notes" />
+        <Textarea id="tips_notes" name="tips_notes" defaultValue={recipe?.tips_notes ?? undefined} />
       </Field>
 
       <div className="flex gap-3">
         <Button type="submit" className="h-10 px-5 text-sm">
-          Add recipe
+          {editing ? "Save changes" : "Add recipe"}
         </Button>
-        <Button type="button" variant="secondary" onClick={onDone} className="h-10 px-5 text-sm">
-          Cancel
-        </Button>
+        {onDone && (
+          <Button type="button" variant="secondary" onClick={onDone} className="h-10 px-5 text-sm">
+            Cancel
+          </Button>
+        )}
       </div>
     </form>
   );

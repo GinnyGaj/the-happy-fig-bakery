@@ -151,3 +151,106 @@ export async function createRecipe(formData: FormData) {
   revalidatePath("/admin/recipes");
   redirect(`/admin/recipes/${recipe.id}`);
 }
+
+export async function updateRecipe(id: string, formData: FormData) {
+  const supabase = await createClient();
+
+  const name = formData.get("name") as string;
+  if (!name?.trim()) throw new Error("Recipe name is required.");
+
+  const sectionNames = parseSections(formData);
+  const ingredients = parseIngredients(formData);
+  const steps = parseSteps(formData);
+
+  if (ingredients.length > 0 && !ingredients.some((i) => i.is_percent_base)) {
+    throw new Error("Choose one ingredient as the 100% baker's percentage base.");
+  }
+
+  const ingredientsWithPercent = computeBakersPercents(ingredients);
+
+  const { error } = await supabase
+    .from("recipes")
+    .update({
+      name: name.trim(),
+      status: (formData.get("status") as RecipeStatus) || "draft",
+      base_yield_qty: formData.get("base_yield_qty") ? Number(formData.get("base_yield_qty")) : null,
+      base_yield_unit: (formData.get("base_yield_unit") as string) || null,
+      tips_notes: (formData.get("tips_notes") as string) || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+
+  // Sections/ingredients/steps are replaced wholesale rather than diffed —
+  // deleting recipe_sections cascades to any recipe_ingredients grouped
+  // under one, but ungrouped ingredients and steps need explicit deletes.
+  const { error: deleteIngredientsError } = await supabase
+    .from("recipe_ingredients")
+    .delete()
+    .eq("recipe_id", id);
+  if (deleteIngredientsError) throw new Error(deleteIngredientsError.message);
+
+  const { error: deleteSectionsError } = await supabase.from("recipe_sections").delete().eq("recipe_id", id);
+  if (deleteSectionsError) throw new Error(deleteSectionsError.message);
+
+  const { error: deleteStepsError } = await supabase.from("recipe_steps").delete().eq("recipe_id", id);
+  if (deleteStepsError) throw new Error(deleteStepsError.message);
+
+  let sectionIds: string[] = [];
+  if (sectionNames.length > 0) {
+    const { data: sections, error: sectionsError } = await supabase
+      .from("recipe_sections")
+      .insert(
+        sectionNames.map((sectionName, index) => ({
+          recipe_id: id,
+          name: sectionName || `Section ${index + 1}`,
+          sort_order: index,
+        }))
+      )
+      .select("id, sort_order")
+      .order("sort_order", { ascending: true });
+    if (sectionsError) throw new Error(sectionsError.message);
+    sectionIds = (sections ?? []).map((section) => section.id);
+  }
+
+  if (ingredientsWithPercent.length > 0) {
+    const { error: ingredientsError } = await supabase.from("recipe_ingredients").insert(
+      ingredientsWithPercent.map((ingredient, index) => ({
+        recipe_id: id,
+        section_id: sectionIds[ingredient.section_index] ?? null,
+        inventory_item_id: ingredient.inventory_item_id,
+        base_weight_grams: ingredient.base_weight_grams,
+        bakers_percent: ingredient.bakers_percent,
+        is_percent_base: ingredient.is_percent_base,
+        sort_order: index,
+      }))
+    );
+    if (ingredientsError) throw new Error(ingredientsError.message);
+  }
+
+  if (steps.length > 0) {
+    const stageCounters: Record<RecipeStage, number> = { pre_prep: 0, prep: 0, bake: 0 };
+    const { error: stepsError } = await supabase.from("recipe_steps").insert(
+      steps.map((step) => ({
+        recipe_id: id,
+        stage: step.stage,
+        step_number: ++stageCounters[step.stage],
+        instruction: step.instruction,
+      }))
+    );
+    if (stepsError) throw new Error(stepsError.message);
+  }
+
+  revalidatePath("/admin/recipes");
+  revalidatePath(`/admin/recipes/${id}`);
+  redirect(`/admin/recipes/${id}`);
+}
+
+export async function deleteRecipe(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("recipes").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/admin/recipes");
+  redirect("/admin/recipes");
+}
