@@ -45,6 +45,11 @@ export default async function RecipeViewPage({ params }: PageProps<"/admin/recip
             <Badge variant="outline">{recipe.status}</Badge>
           </div>
           <div className="flex gap-2">
+            <a href={`/admin/recipes/${recipe.id}/download`}>
+              <Button type="button" variant="secondary" className="h-9 px-4 text-sm">
+                Download
+              </Button>
+            </a>
             <Link href={`/admin/recipes/${recipe.id}/edit`}>
               <Button type="button" variant="secondary" className="h-9 px-4 text-sm">
                 Edit
