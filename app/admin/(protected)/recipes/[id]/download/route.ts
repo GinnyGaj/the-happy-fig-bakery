@@ -10,11 +10,18 @@ const STAGE_LABELS: Record<RecipeStage, string> = {
 };
 const STAGE_ORDER: RecipeStage[] = ["pre_prep", "prep", "bake"];
 
-export async function GET(_request: Request, { params }: RouteContext<"/admin/recipes/[id]/download">) {
+export async function GET(request: Request, { params }: RouteContext<"/admin/recipes/[id]/download">) {
   const { id } = await params;
+  const target = new URL(request.url).searchParams.get("target");
 
   const recipe = await getRecipe(id);
   if (!recipe) notFound();
+
+  const targetYield = target != null ? Number(target) : NaN;
+  const scaleFactor =
+    !Number.isNaN(targetYield) && targetYield > 0 && recipe.base_yield_qty != null && recipe.base_yield_qty > 0
+      ? targetYield / recipe.base_yield_qty
+      : null;
 
   const [ingredients, sections, steps] = await Promise.all([
     getRecipeIngredients(id),
@@ -35,7 +42,10 @@ export async function GET(_request: Request, { params }: RouteContext<"/admin/re
   sheet.columns = [{ width: 32 }, { width: 14 }, { width: 14 }];
 
   sheet.addRow([recipe.name]).font = { bold: true, size: 14 };
-  if (recipe.base_yield_qty != null) {
+  if (scaleFactor != null) {
+    sheet.addRow([`Scaled to ${targetYield} ${recipe.base_yield_unit ?? ""}`.trim()]);
+    sheet.addRow([`(base recipe yields ${recipe.base_yield_qty} ${recipe.base_yield_unit ?? ""})`.trim()]);
+  } else if (recipe.base_yield_qty != null) {
     sheet.addRow([`Yields ${recipe.base_yield_qty} ${recipe.base_yield_unit ?? ""}`.trim()]);
   }
   sheet.addRow([]);
@@ -48,9 +58,10 @@ export async function GET(_request: Request, { params }: RouteContext<"/admin/re
       sheet.addRow([group.name]).font = { italic: true };
     }
     for (const ingredient of group.ingredients) {
+      const weight = scaleFactor != null ? ingredient.base_weight_grams * scaleFactor : ingredient.base_weight_grams;
       sheet.addRow([
         ingredient.inventory_items.name,
-        ingredient.base_weight_grams,
+        Number(weight.toFixed(1)),
         Number(ingredient.bakers_percent.toFixed(1)),
       ]);
     }
@@ -80,7 +91,8 @@ export async function GET(_request: Request, { params }: RouteContext<"/admin/re
   }
 
   const buffer = await workbook.xlsx.writeBuffer();
-  const filename = `${recipe.name.replace(/[^a-z0-9]+/gi, "_").toLowerCase()}.xlsx`;
+  const suffix = scaleFactor != null ? `_scaled_${targetYield}` : "";
+  const filename = `${recipe.name.replace(/[^a-z0-9]+/gi, "_").toLowerCase()}${suffix}.xlsx`;
 
   return new Response(buffer, {
     headers: {
