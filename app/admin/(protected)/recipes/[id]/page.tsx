@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { getRecipe, getRecipeIngredients, getRecipeSections, getRecipeSteps } from "@/lib/recipe-queries";
 import { DeleteRecipeButton } from "./DeleteRecipeButton";
+import { ScaleRecipe } from "./ScaleRecipe";
 import type { RecipeStage } from "@/lib/types";
 
 const STAGE_LABELS: Record<RecipeStage, string> = {
@@ -112,6 +113,24 @@ export default async function RecipeViewPage({ params }: PageProps<"/admin/recip
           {ingredients.length === 0 && (
             <p className="text-sm text-muted-foreground">No ingredients added.</p>
           )}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-xl">Scale recipe</h2>
+        <div className="mt-3">
+          <ScaleRecipe
+            ingredients={ingredients.map((ingredient) => ({
+              id: ingredient.id,
+              name: ingredient.inventory_items.name,
+              base_weight_grams: ingredient.base_weight_grams,
+              bakers_percent: ingredient.bakers_percent,
+              is_percent_base: ingredient.is_percent_base,
+              section_name: sections.find((section) => section.id === ingredient.section_id)?.name ?? null,
+            }))}
+            baseYieldQty={recipe.base_yield_qty}
+            baseYieldUnit={recipe.base_yield_unit}
+          />
         </div>
       </section>
 
