@@ -41,7 +41,7 @@ export function FormSettingsClient({ weeklyMenu }: { weeklyMenu: WeeklyMenu }) {
         <Button
           type="button"
           onClick={toggle}
-          disabled={pending}
+          loading={pending}
           variant={open ? "secondary" : "primary"}
           className="mt-4 h-10 px-5 text-sm"
         >
@@ -65,7 +65,7 @@ export function FormSettingsClient({ weeklyMenu }: { weeklyMenu: WeeklyMenu }) {
         <Button
           type="button"
           onClick={saveAnnouncement}
-          disabled={pending}
+          loading={pending}
           className="mt-4 h-10 px-5 text-sm"
         >
           Save

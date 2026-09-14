@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Field, Input, Textarea } from "@/components/ui/Input";
-import { Button } from "@/components/ui/Button";
+import { Button, SubmitButton } from "@/components/ui/Button";
 import { formatPrice } from "@/lib/utils";
 import { createMenuItem, updateMenuItem, deleteMenuItem } from "@/lib/actions/menu";
 import { createClient } from "@/lib/supabase/client";
@@ -62,9 +62,13 @@ export function ItemLibrary({ items }: { items: MenuItem[] }) {
                   if (confirm(`Delete ${item.name}?`)) await deleteMenuItem(item.id);
                 }}
               >
-                <button type="submit" className="text-sm text-destructive underline">
+                <SubmitButton
+                  variant="ghost"
+                  className="h-auto px-0 text-sm text-destructive underline hover:opacity-80"
+                  loadingChildren="Deleting…"
+                >
                   Delete
-                </button>
+                </SubmitButton>
               </form>
             </div>
           </li>
@@ -199,9 +203,9 @@ function ItemForm({ item, onDone }: { item: MenuItem | null; onDone: () => void 
         This is a free / promotional item
       </label>
       <div className="flex gap-3">
-        <Button type="submit" className="h-10 px-5 text-sm">
+        <SubmitButton className="h-10 px-5 text-sm" loadingChildren="Saving…">
           {item ? "Save changes" : "Add item"}
-        </Button>
+        </SubmitButton>
         <Button type="button" variant="secondary" onClick={onDone} className="h-10 px-5 text-sm">
           Cancel
         </Button>

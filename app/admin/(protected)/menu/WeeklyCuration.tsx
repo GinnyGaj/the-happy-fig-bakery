@@ -129,7 +129,7 @@ export function WeeklyCuration({
       </div>
 
       <div className="mt-4 flex items-center gap-4">
-        <Button type="button" onClick={handleSave} disabled={pending} className="h-10 px-5 text-sm">
+        <Button type="button" onClick={handleSave} loading={pending} className="h-10 px-5 text-sm">
           {pending ? "Updating…" : "Update Menu"}
         </Button>
         {savedAt && (

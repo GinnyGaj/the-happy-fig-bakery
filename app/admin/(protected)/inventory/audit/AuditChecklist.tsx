@@ -61,7 +61,7 @@ export function AuditChecklist({ items }: { items: InventoryStockStatus[] }) {
             <Button
               type="button"
               onClick={() => handleSave(item)}
-              disabled={savingId === item.inventory_item_id}
+              loading={savingId === item.inventory_item_id}
               className="h-10 px-4 text-sm"
             >
               {savingId === item.inventory_item_id

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Field, Input, Select, Textarea } from "@/components/ui/Input";
-import { Button } from "@/components/ui/Button";
+import { Button, SubmitButton } from "@/components/ui/Button";
 import { createRecipe, updateRecipe } from "@/lib/actions/recipes";
 import type { InventoryItem, Recipe, RecipeIngredient, RecipeSection, RecipeStage, RecipeStep } from "@/lib/types";
 
@@ -339,9 +339,9 @@ function RecipeFormFields({
       </Field>
 
       <div className="flex gap-3">
-        <Button type="submit" className="h-10 px-5 text-sm">
+        <SubmitButton className="h-10 px-5 text-sm" loadingChildren="Saving…">
           {editing ? "Save changes" : "Add recipe"}
-        </Button>
+        </SubmitButton>
         {onDone && (
           <Button type="button" variant="secondary" onClick={onDone} className="h-10 px-5 text-sm">
             Cancel

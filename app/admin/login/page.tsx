@@ -30,7 +30,7 @@ export default function AdminLoginPage() {
             />
           </Field>
           {state.error && <p className="text-sm text-destructive">{state.error}</p>}
-          <Button type="submit" disabled={pending} className="mt-2 w-full">
+          <Button type="submit" loading={pending} className="mt-2 w-full">
             {pending ? "Signing in…" : "Sign in"}
           </Button>
         </form>

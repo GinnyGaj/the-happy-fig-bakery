@@ -2,7 +2,7 @@
 
 import { Fragment, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
+import { Button, SubmitButton } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Input";
 import { cn } from "@/lib/utils";
 import {
@@ -214,9 +214,13 @@ export function InventoryTable({
                             }
                           }}
                         >
-                          <button type="submit" className="text-sm text-destructive underline">
+                          <SubmitButton
+                            variant="ghost"
+                            className="h-auto px-0 text-sm text-destructive underline hover:opacity-80"
+                            loadingChildren="Deleting…"
+                          >
                             Delete
-                          </button>
+                          </SubmitButton>
                         </form>
                       </div>
                     </td>
@@ -353,9 +357,9 @@ function ItemForm({
         <Input id="notes" name="notes" defaultValue={item?.notes ?? ""} />
       </Field>
       <div className="flex gap-3">
-        <Button type="submit" className="h-10 px-5 text-sm">
+        <SubmitButton className="h-10 px-5 text-sm" loadingChildren="Saving…">
           {item ? "Save changes" : "Add item"}
-        </Button>
+        </SubmitButton>
         <Button type="button" variant="secondary" onClick={onDone} className="h-10 px-5 text-sm">
           Cancel
         </Button>

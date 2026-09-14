@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button, SubmitButton } from "@/components/ui/Button";
 import { Field, Input, Select, Textarea } from "@/components/ui/Input";
 import { logPurchase } from "@/lib/actions/inventory";
 import { createClient } from "@/lib/supabase/client";
@@ -203,9 +203,9 @@ export function LogPurchaseForm({ items }: { items: InventoryItem[] }) {
         </div>
 
         <div className="flex gap-3">
-          <Button type="submit" disabled={uploading} className="h-10 px-5 text-sm">
+          <SubmitButton disabled={uploading} className="h-10 px-5 text-sm" loadingChildren="Saving…">
             Save Purchase
-          </Button>
+          </SubmitButton>
           <Button
             type="button"
             variant="secondary"
