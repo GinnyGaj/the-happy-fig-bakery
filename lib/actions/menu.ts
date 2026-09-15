@@ -207,7 +207,7 @@ export async function setFormOpen(weeklyMenuId: string, open: boolean) {
     .update({ form_open: open, updated_at: new Date().toISOString() })
     .eq("id", weeklyMenuId);
   if (error) throw new Error(error.message);
-  revalidatePath("/admin/form-settings");
+  revalidatePath("/admin");
   revalidatePath("/");
 }
 
@@ -218,6 +218,6 @@ export async function setAnnouncement(weeklyMenuId: string, message: string) {
     .update({ announcement_message: message || null, updated_at: new Date().toISOString() })
     .eq("id", weeklyMenuId);
   if (error) throw new Error(error.message);
-  revalidatePath("/admin/form-settings");
+  revalidatePath("/admin");
   revalidatePath("/");
 }

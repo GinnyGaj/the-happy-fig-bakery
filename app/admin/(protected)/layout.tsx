@@ -7,7 +7,6 @@ const navItems = [
   { href: "/admin/orders", label: "Order Management" },
   { href: "/admin/inventory", label: "Inventory & Expenses" },
   { href: "/admin/recipes", label: "Recipes" },
-  { href: "/admin/form-settings", label: "Form Settings" },
 ];
 
 export default function AdminLayout({ children }: LayoutProps<"/admin">) {
