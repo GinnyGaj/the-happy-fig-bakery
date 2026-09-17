@@ -41,10 +41,15 @@
   --font-sans: var(--font-karla);
 }
 
+html {
+  overscroll-behavior-y: none;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-karla), sans-serif;
+  overscroll-behavior-y: none;
 }
 
 h1, h2, h3, h4, .font-display {
