@@ -32,11 +32,11 @@ export default async function Home() {
 
           {dayDate && (
             <div className="mt-4 rounded-lg bg-accent px-4 py-3">
-              <p className="text-sm font-semibold uppercase tracking-wide">
+              <p className="text-base font-semibold uppercase tracking-wide sm:text-lg">
                 Collection: {dayDate}
                 {pickupTimeRange ? ` · ${pickupTimeRange}` : ""}
               </p>
-              <p className="mt-1 text-sm text-muted-foreground">Contactless payment available</p>
+              <p className="mt-1 text-base text-muted-foreground">Contactless payment available</p>
             </div>
           )}
 
