@@ -51,8 +51,8 @@ export function MenuCard({
       </div>
       <div className="flex flex-1 flex-col gap-2 p-5">
         <div className="flex items-baseline justify-between gap-2">
-          <h3 className="text-xl">{item.name}</h3>
-          <span className="whitespace-nowrap text-base text-foreground">
+          <h3 className="text-2xl">{item.name}</h3>
+          <span className="whitespace-nowrap text-lg text-foreground">
             {formatPrice(item.price)}
           </span>
         </div>

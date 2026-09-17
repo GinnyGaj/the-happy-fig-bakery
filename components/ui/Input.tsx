@@ -8,20 +8,24 @@ export function Field({
   label,
   htmlFor,
   error,
+  labelClassName,
+  errorClassName,
   children,
 }: {
   label: string;
   htmlFor: string;
   error?: string;
+  labelClassName?: string;
+  errorClassName?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={htmlFor} className="text-sm font-medium text-foreground">
+      <label htmlFor={htmlFor} className={labelClassName ?? "text-sm font-medium text-foreground"}>
         {label}
       </label>
       {children}
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className={errorClassName ?? "text-sm text-destructive"}>{error}</p>}
     </div>
   );
 }

@@ -25,14 +25,14 @@ export function OrderSummary({
 
   return (
     <div className="paper rounded-2xl border border-border bg-muted/50 p-5">
-      <h2 className="text-xl">Your order</h2>
-      <p className="mt-1 text-sm text-muted-foreground">Pay at pickup. Card payment accepted</p>
+      <h2 className="text-2xl">Your order</h2>
+      <p className="mt-1 text-base text-muted-foreground">Pay at pickup. Card payment accepted</p>
       {lines.length === 0 ? (
-        <p className="mt-3 text-sm text-muted-foreground">Nothing selected yet</p>
+        <p className="mt-3 text-base text-muted-foreground">Nothing selected yet</p>
       ) : (
         <ul className="mt-3 flex flex-col gap-2">
           {lines.map((line) => (
-            <li key={line.item.id} className="flex items-center justify-between text-sm">
+            <li key={line.item.id} className="flex items-center justify-between text-base">
               <span>
                 {line.item.name} × {line.quantity}
               </span>
@@ -51,13 +51,13 @@ export function OrderSummary({
         </ul>
       )}
       <div className="mt-4 border-t border-border pt-4">
-        <div className="flex items-center justify-between text-base font-medium">
+        <div className="flex items-center justify-between text-lg font-medium">
           <span>Subtotal</span>
           <span>{formatPrice(subtotal)}</span>
         </div>
       </div>
       {pickupDate && pickupStartTime && pickupEndTime && (
-        <label className="mt-4 flex items-start gap-2 text-sm">
+        <label className="mt-4 flex items-start gap-2 text-base">
           <input
             type="checkbox"
             checked={pickupConfirmed}
@@ -79,7 +79,7 @@ export function OrderSummary({
       >
         {submitting ? "Placing your order…" : "Place My Order"}
       </Button>
-      <p className="mt-3 text-center text-sm text-muted-foreground">
+      <p className="mt-3 text-center text-base text-muted-foreground">
         No account needed. You&apos;ll see a confirmation message.
       </p>
     </div>

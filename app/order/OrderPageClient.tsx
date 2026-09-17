@@ -134,31 +134,64 @@ function OrderPageInner({
 
       <div className="mt-14 max-w-2xl">
         <h2 className="text-2xl">Your details</h2>
-        {formError && <p className="mt-3 text-sm text-destructive">{formError}</p>}
+        {formError && <p className="mt-3 text-base text-destructive">{formError}</p>}
         <form id="customer-details" className="mt-5 flex flex-col gap-5">
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            <Field label="First name" htmlFor="firstName" error={errors.firstName}>
-              <Input id="firstName" name="firstName" required autoComplete="given-name" />
+            <Field
+              label="First name"
+              htmlFor="firstName"
+              error={errors.firstName}
+              labelClassName="text-base font-medium text-foreground"
+              errorClassName="text-base text-destructive"
+            >
+              <Input
+                id="firstName"
+                name="firstName"
+                required
+                autoComplete="given-name"
+                className="text-lg"
+              />
             </Field>
-            <Field label="Last name" htmlFor="lastName" error={errors.lastName}>
-              <Input id="lastName" name="lastName" required autoComplete="family-name" />
+            <Field
+              label="Last name"
+              htmlFor="lastName"
+              error={errors.lastName}
+              labelClassName="text-base font-medium text-foreground"
+              errorClassName="text-base text-destructive"
+            >
+              <Input
+                id="lastName"
+                name="lastName"
+                required
+                autoComplete="family-name"
+                className="text-lg"
+              />
             </Field>
           </div>
-          <Field label="WhatsApp number" htmlFor="whatsapp" error={errors.whatsapp}>
+          <Field
+            label="WhatsApp number"
+            htmlFor="whatsapp"
+            error={errors.whatsapp}
+            labelClassName="text-base font-medium text-foreground"
+            errorClassName="text-base text-destructive"
+          >
             <Input
               id="whatsapp"
               name="whatsapp"
               type="tel"
               required
               autoComplete="tel"
+              className="text-lg"
             />
           </Field>
           <Field
             label="Special instructions (optional)"
             htmlFor="specialInstructions"
             error={errors.specialInstructions}
+            labelClassName="text-base font-medium text-foreground"
+            errorClassName="text-base text-destructive"
           >
-            <Textarea id="specialInstructions" name="specialInstructions" />
+            <Textarea id="specialInstructions" name="specialInstructions" className="text-lg" />
           </Field>
         </form>
       </div>
