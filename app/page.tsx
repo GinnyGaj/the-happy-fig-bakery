@@ -43,7 +43,7 @@ export default async function Home() {
                 </p>
               </div>
               {weeklyMenu.announcement_message && (
-                <p className="mt-4 rounded-lg bg-accent px-4 py-3 text-sm">
+                <p className="mt-4 rounded-lg bg-accent px-4 py-3 text-base font-medium">
                   {weeklyMenu.announcement_message}
                 </p>
               )}

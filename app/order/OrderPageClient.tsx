@@ -118,7 +118,7 @@ function OrderPageInner({
   return (
     <>
       {announcement && (
-        <p className="mt-4 rounded-lg bg-accent px-4 py-3 text-sm">{announcement}</p>
+        <p className="mt-4 rounded-lg bg-accent px-4 py-3 text-base font-medium">{announcement}</p>
       )}
 
       <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2">
