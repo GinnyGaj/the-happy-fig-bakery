@@ -66,11 +66,6 @@ export function MenuCard({
         {item.description && (
           <p className="text-sm leading-relaxed text-muted-foreground">{item.description}</p>
         )}
-        {item.is_free_item && !soldOut && (
-          <p className="text-sm leading-relaxed text-muted-foreground">
-            Add any two items to your cart and claim this sweet treat on us.
-          </p>
-        )}
         <div className="mt-auto pt-3">
           {soldOut ? (
             <Badge variant="outline">Sold out</Badge>
