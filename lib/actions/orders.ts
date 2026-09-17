@@ -31,6 +31,8 @@ export interface PlaceOrderState {
   orderId?: string;
 }
 
+const FREE_BAKE_UNLOCK_THRESHOLD = 3;
+
 export async function placeOrder(
   input: unknown
 ): Promise<PlaceOrderState> {
@@ -49,6 +51,34 @@ export async function placeOrder(
     parsed.data;
 
   const supabase = createServiceClient();
+
+  const { data: menuItems, error: menuItemsError } = await supabase
+    .from("menu_items")
+    .select("id, is_free_item")
+    .in(
+      "id",
+      items.map((i) => i.item_id)
+    );
+
+  if (menuItemsError) {
+    console.error("placeOrder failed to load menu items:", menuItemsError);
+    return { error: "Something went wrong placing your order. Please try again." };
+  }
+
+  const freeItemIds = new Set(
+    (menuItems ?? []).filter((m) => m.is_free_item).map((m) => m.id)
+  );
+  const paidQty = items.reduce(
+    (sum, i) => (freeItemIds.has(i.item_id) ? sum : sum + i.quantity),
+    0
+  );
+  const hasFreeItem = items.some((i) => freeItemIds.has(i.item_id));
+
+  if (hasFreeItem && paidQty < FREE_BAKE_UNLOCK_THRESHOLD) {
+    return {
+      error: `Your free test bake requires at least ${FREE_BAKE_UNLOCK_THRESHOLD} other items in your order.`,
+    };
+  }
 
   const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
