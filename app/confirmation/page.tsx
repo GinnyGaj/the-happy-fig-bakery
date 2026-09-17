@@ -31,14 +31,12 @@ export default async function ConfirmationPage({
           <p className="mt-3 text-lg">Thank you, {name || "friend"}</p>
 
           <div className="paper mt-6 rounded-2xl border border-border bg-card px-6 py-5 text-left">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Pickup details
-            </p>
+            <h2 className="text-xl">Pickup details</h2>
             <p className="mt-2 text-lg font-medium text-primary">
-              Pickup {dayDate ?? "Saturday"} 9:30–11:30am
+              {dayDate ?? "Saturday"} 9:30–11:30am
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
-              185 Boundary Road, N22 6AL. Ring bell on arrival.
+              185 Boundary Road, N22 6AL
             </p>
             <p className="mt-3 text-sm text-muted-foreground">Contactless payment available</p>
           </div>
