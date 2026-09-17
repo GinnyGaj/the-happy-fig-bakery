@@ -8,6 +8,7 @@ import { useCartIfAvailable } from "@/lib/cart";
 import type { MenuItem } from "@/lib/types";
 
 const MAX_QTY = 10;
+const FREE_BAKE_UNLOCK_THRESHOLD = 3;
 
 export function MenuCard({
   item,
@@ -26,7 +27,7 @@ export function MenuCard({
     remainingStock === null ? MAX_QTY : Math.max(0, Math.min(MAX_QTY, remainingStock));
   const otherItemsQty =
     cart?.lines.reduce((sum, l) => (l.item.id === item.id ? sum : sum + l.quantity), 0) ?? 0;
-  const freeItemUnlocked = otherItemsQty >= 2;
+  const freeItemUnlocked = otherItemsQty >= FREE_BAKE_UNLOCK_THRESHOLD;
   const maxQty = item.is_free_item ? (freeItemUnlocked ? Math.min(1, baseMaxQty) : 0) : baseMaxQty;
 
   return (
@@ -73,7 +74,9 @@ export function MenuCard({
             <div className="flex flex-col gap-1.5">
               {item.is_free_item && !freeItemUnlocked && (
                 <span className="inline-flex w-fit items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                  🔒 Add {2 - otherItemsQty} {2 - otherItemsQty === 1 ? "more item" : "items"} to unlock
+                  🔒 Add {FREE_BAKE_UNLOCK_THRESHOLD - otherItemsQty}{" "}
+                  {FREE_BAKE_UNLOCK_THRESHOLD - otherItemsQty === 1 ? "more item" : "items"} to
+                  unlock
                 </span>
               )}
               {item.is_free_item && freeItemUnlocked && (
