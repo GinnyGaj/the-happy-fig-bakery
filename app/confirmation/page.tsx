@@ -33,7 +33,7 @@ export default async function ConfirmationPage({
           <div className="paper mt-6 rounded-2xl border border-border bg-card px-6 py-5 text-left">
             <h2 className="text-xl">Pickup details</h2>
             <p className="mt-2 text-lg font-medium text-primary">
-              {dayDate ?? "Saturday"} 9:30–11:30am
+              {dayDate ?? "Saturday"}, 9:30–11:30am
             </p>
             <p className="mt-1 text-base font-medium">
               185 Boundary Road, N22 6AL
