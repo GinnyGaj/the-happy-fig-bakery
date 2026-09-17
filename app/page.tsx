@@ -3,7 +3,7 @@ import { Footer } from "@/components/Footer";
 import { ButtonLink } from "@/components/ui/Button";
 import { MenuCard } from "@/components/MenuCard";
 import { getCurrentWeeklyMenu } from "@/lib/queries";
-import { formatDayDate } from "@/lib/utils";
+import { formatDayDate, formatTimeOnly } from "@/lib/utils";
 import { OrderPageClient } from "./order/OrderPageClient";
 
 export default async function Home() {
@@ -18,15 +18,25 @@ export default async function Home() {
 
   const formOpen = Boolean(weeklyMenu?.form_open);
   const dayDate = weeklyMenu?.pickup_date ? formatDayDate(weeklyMenu.pickup_date) : null;
+  const pickupTimeRange =
+    weeklyMenu?.pickup_start_time && weeklyMenu?.pickup_end_time
+      ? `${formatTimeOnly(weeklyMenu.pickup_start_time)}AM–${formatTimeOnly(weeklyMenu.pickup_end_time)}AM`
+      : null;
 
   return (
     <>
       <Header />
       <main className="flex-1">
         <div className="mx-auto max-w-5xl px-5 py-14">
-          <h1 className="text-4xl">
-            This week&apos;s menu{dayDate ? ` (${dayDate})` : ""}
-          </h1>
+          <h1 className="text-4xl">This week&apos;s menu</h1>
+
+          {dayDate && (
+            <p className="mt-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Collection: {dayDate}
+              {pickupTimeRange ? ` · ${pickupTimeRange}` : ""}
+            </p>
+          )}
+          <p className="mt-1 text-sm text-muted-foreground">Contactless payment available</p>
 
           {!weeklyMenu || items.length === 0 ? (
             <div className="mt-10 rounded-2xl border border-border bg-card p-8 text-center">
