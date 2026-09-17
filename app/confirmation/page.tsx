@@ -29,7 +29,19 @@ export default async function ConfirmationPage({
         <div className="mx-auto max-w-2xl px-5 py-16 text-center">
           <h1 className="text-4xl text-primary">Your order is booked ✓</h1>
           <p className="mt-3 text-lg">Thank you, {name || "friend"}</p>
-          {dayDate && <p className="mt-1 text-base text-muted-foreground">Pick up {dayDate}</p>}
+
+          <div className="paper mt-6 rounded-2xl border border-border bg-card px-6 py-5 text-left">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Pickup details
+            </p>
+            <p className="mt-2 text-lg font-medium text-primary">
+              Pickup {dayDate ?? "Saturday"} 9:30–11:30am
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              185 Boundary Road, N22 6AL. Ring bell on arrival.
+            </p>
+            <p className="mt-3 text-sm text-muted-foreground">Contactless payment available</p>
+          </div>
 
           {items.length > 0 && (
             <div className="paper mt-8 rounded-2xl border border-border bg-card p-6 text-left">
@@ -48,10 +60,6 @@ export default async function ConfirmationPage({
                 <span>Subtotal</span>
                 <span>{formatPrice(Number(subtotal))}</span>
               </div>
-              <p className="mt-4 text-sm text-muted-foreground">
-                Pickup {dayDate ?? "Saturday"} 9:30–11:30am at 185 Boundary Road, N22 6AL. Ring
-                bell on arrival.
-              </p>
             </div>
           )}
 
