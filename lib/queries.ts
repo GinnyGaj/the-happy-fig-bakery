@@ -35,9 +35,28 @@ export async function getCurrentWeeklyMenu(): Promise<{
   }
   const { data: stock } = await stockQuery;
 
-  const sortedItems = ((items ?? []) as MenuItem[]).sort(
-    (a, b) => Number(a.is_free_item) - Number(b.is_free_item)
-  );
+  const menuItemIds = weeklyMenu.menu_item_ids ?? [];
+  const idOrder = new Map(menuItemIds.map((id: string, index: number) => [id, index]));
+  const priorityOrder = [
+    "honey & feta swirls",
+    "rosemary focaccia",
+    "chocolate chip cookie",
+    "spiced samosa",
+  ];
+  const priorityRank = (name: string) => {
+    const index = priorityOrder.indexOf(name.trim().toLowerCase());
+    return index === -1 ? priorityOrder.length : index;
+  };
+
+  const sortedItems = ((items ?? []) as MenuItem[]).sort((a, b) => {
+    const priorityDiff = priorityRank(a.name) - priorityRank(b.name);
+    if (priorityDiff !== 0) return priorityDiff;
+
+    const freeDiff = Number(a.is_free_item) - Number(b.is_free_item);
+    if (freeDiff !== 0) return freeDiff;
+
+    return (idOrder.get(a.id) ?? 0) - (idOrder.get(b.id) ?? 0);
+  });
 
   return {
     weeklyMenu: weeklyMenu as WeeklyMenu,
