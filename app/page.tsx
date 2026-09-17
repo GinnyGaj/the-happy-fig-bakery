@@ -31,12 +31,14 @@ export default async function Home() {
           <h1 className="text-4xl">This week&apos;s menu</h1>
 
           {dayDate && (
-            <p className="mt-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Collection: {dayDate}
-              {pickupTimeRange ? ` · ${pickupTimeRange}` : ""}
-            </p>
+            <div className="mt-4 rounded-lg bg-accent px-4 py-3">
+              <p className="text-sm font-semibold uppercase tracking-wide">
+                Collection: {dayDate}
+                {pickupTimeRange ? ` · ${pickupTimeRange}` : ""}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">Contactless payment available</p>
+            </div>
           )}
-          <p className="mt-1 text-sm text-muted-foreground">Contactless payment available</p>
 
           {!weeklyMenu || items.length === 0 ? (
             <div className="mt-10 rounded-2xl border border-border bg-card p-8 text-center">
