@@ -27,7 +27,7 @@ export default async function ConfirmationPage({
       <Header />
       <main className="flex-1">
         <div className="mx-auto max-w-2xl px-5 py-16 text-center">
-          <h1 className="text-4xl text-primary">Your order is booked ✓</h1>
+          <h1 className="text-4xl text-primary">Your order is booked</h1>
           <p className="mt-3 text-lg">Thank you, {name || "friend"}</p>
 
           <div className="paper mt-6 rounded-2xl border border-border bg-card px-6 py-5 text-left">
@@ -35,7 +35,7 @@ export default async function ConfirmationPage({
             <p className="mt-2 text-lg font-medium text-primary">
               {dayDate ?? "Saturday"} 9:30–11:30am
             </p>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-base font-medium">
               185 Boundary Road, N22 6AL
             </p>
             <p className="mt-3 text-sm text-muted-foreground">Contactless payment available</p>
