@@ -36,7 +36,9 @@ export async function getCurrentWeeklyMenu(): Promise<{
   const { data: stock } = await stockQuery;
 
   const menuItemIds = weeklyMenu.menu_item_ids ?? [];
-  const idOrder = new Map(menuItemIds.map((id: string, index: number) => [id, index]));
+  const idOrder = new Map<string, number>(
+    (menuItemIds as string[]).map((id, index) => [id, index])
+  );
   const priorityOrder = [
     "honey & feta swirls",
     "rosemary focaccia",
