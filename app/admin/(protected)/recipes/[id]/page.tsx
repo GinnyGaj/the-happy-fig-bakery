@@ -42,14 +42,14 @@ export default async function RecipeViewPage({
         <Link href="/admin/recipes" className="text-sm text-primary underline">
           ← All recipes
         </Link>
-        <div className="mt-2 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl">{recipe.name}</h1>
+        <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl">{recipe.name}</h1>
             <Badge variant="outline">{recipe.status}</Badge>
           </div>
-          <div className="flex gap-2">
-            <a href={`/admin/recipes/${recipe.id}/download`}>
-              <Button type="button" variant="secondary" className="h-9 px-4 text-sm">
+          <div className="flex flex-wrap gap-2">
+            <a href={`/admin/recipes/${recipe.id}/download`} className="flex-1 sm:flex-none">
+              <Button type="button" variant="secondary" className="h-9 w-full px-4 text-sm">
                 Download
               </Button>
             </a>
@@ -69,8 +69,8 @@ export default async function RecipeViewPage({
                 })),
               }))}
             />
-            <Link href={`/admin/recipes/${recipe.id}/edit`}>
-              <Button type="button" variant="secondary" className="h-9 px-4 text-sm">
+            <Link href={`/admin/recipes/${recipe.id}/edit`} className="flex-1 sm:flex-none">
+              <Button type="button" variant="secondary" className="h-9 w-full px-4 text-sm">
                 Edit
               </Button>
             </Link>
@@ -103,24 +103,24 @@ export default async function RecipeViewPage({
                   </colgroup>
                   <thead>
                     <tr className="border-b border-border text-left text-muted-foreground">
-                      <th className="px-4 py-3 font-medium">Ingredient</th>
-                      <th className="px-4 py-3 font-medium">Weight</th>
-                      <th className="px-4 py-3 font-medium">Baker&apos;s %</th>
+                      <th className="px-2 py-2.5 font-medium sm:px-4 sm:py-3">Ingredient</th>
+                      <th className="px-2 py-2.5 font-medium sm:px-4 sm:py-3">Weight</th>
+                      <th className="px-2 py-2.5 font-medium sm:px-4 sm:py-3">Baker&apos;s %</th>
                     </tr>
                   </thead>
                   <tbody>
                     {group.ingredients.map((ingredient) => (
                       <tr key={ingredient.id} className="border-b border-border last:border-0">
-                        <td className="px-4 py-3">
+                        <td className="px-2 py-2.5 sm:px-4 sm:py-3">
                           {ingredient.inventory_items.name}
                           {ingredient.is_percent_base && (
-                            <Badge variant="outline" className="ml-2">
+                            <Badge variant="outline" className="ml-2 whitespace-nowrap">
                               100% base
                             </Badge>
                           )}
                         </td>
-                        <td className="px-4 py-3">{ingredient.base_weight_grams}g</td>
-                        <td className="px-4 py-3">{ingredient.bakers_percent.toFixed(1)}%</td>
+                        <td className="px-2 py-2.5 sm:px-4 sm:py-3">{ingredient.base_weight_grams}g</td>
+                        <td className="px-2 py-2.5 sm:px-4 sm:py-3">{ingredient.bakers_percent.toFixed(1)}%</td>
                       </tr>
                     ))}
                   </tbody>

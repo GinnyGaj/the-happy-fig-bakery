@@ -24,16 +24,16 @@ export function RecipeList({ recipes }: { recipes: Recipe[] }) {
 
   return (
     <section>
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-xl">All recipes</h2>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
           {STATUS_FILTERS.map((filter) => (
             <button
               key={filter.value}
               type="button"
               onClick={() => setStatusFilter(filter.value)}
               className={cn(
-                "rounded-full border px-3 py-1 text-xs uppercase tracking-[0.1em]",
+                "shrink-0 rounded-full border px-3 py-1 text-xs uppercase tracking-[0.1em]",
                 statusFilter === filter.value
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border text-muted-foreground"
@@ -46,7 +46,7 @@ export function RecipeList({ recipes }: { recipes: Recipe[] }) {
       </div>
       <ul className="mt-4 flex flex-col divide-y divide-border rounded-2xl border border-border bg-card">
         {filteredRecipes.map((recipe) => (
-          <li key={recipe.id} className="flex items-center justify-between gap-3 px-5 py-4">
+          <li key={recipe.id} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <Link href={`/admin/recipes/${recipe.id}`} className="font-medium text-primary underline">
                 {recipe.name}
@@ -57,12 +57,12 @@ export function RecipeList({ recipes }: { recipes: Recipe[] }) {
                 </p>
               )}
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Badge variant="outline">{recipe.status}</Badge>
               <ButtonLink
                 href={`/admin/recipes/${recipe.id}/edit`}
                 variant="secondary"
-                className="h-9 px-4 text-sm"
+                className="h-9 flex-1 px-4 text-sm sm:flex-none"
               >
                 Edit
               </ButtonLink>
