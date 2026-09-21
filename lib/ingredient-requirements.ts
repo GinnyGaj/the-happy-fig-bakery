@@ -7,10 +7,13 @@ export interface IngredientRequirement {
   totalQuantity: number;
 }
 
+export type UnmappedReason = "no_recipe_linked" | "missing_base_yield" | "no_recipe_ingredients";
+
 export interface UnmappedMenuItem {
   itemId: string;
   name: string;
   orderedQty: number;
+  reason: UnmappedReason;
 }
 
 export interface MenuItemBreakdown {
@@ -61,8 +64,18 @@ export function computeIngredientRequirements(
     const mapping = menuItemRecipeMap.get(itemId);
     const recipeIngredients = mapping ? recipeIngredientsMap.get(mapping.recipeId) : undefined;
 
-    if (!mapping || !mapping.baseYieldQty || mapping.baseYieldQty <= 0 || !recipeIngredients) {
-      unmappedMenuItems.push({ itemId, name: itemName, orderedQty });
+    if (!mapping) {
+      unmappedMenuItems.push({ itemId, name: itemName, orderedQty, reason: "no_recipe_linked" });
+      continue;
+    }
+
+    if (!mapping.baseYieldQty || mapping.baseYieldQty <= 0) {
+      unmappedMenuItems.push({ itemId, name: itemName, orderedQty, reason: "missing_base_yield" });
+      continue;
+    }
+
+    if (!recipeIngredients) {
+      unmappedMenuItems.push({ itemId, name: itemName, orderedQty, reason: "no_recipe_ingredients" });
       continue;
     }
 

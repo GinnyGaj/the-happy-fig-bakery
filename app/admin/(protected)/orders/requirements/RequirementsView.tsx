@@ -5,7 +5,17 @@ import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import type { IngredientRequirement, IngredientRequirementsResult } from "@/lib/ingredient-requirements";
+import type {
+  IngredientRequirement,
+  IngredientRequirementsResult,
+  UnmappedReason,
+} from "@/lib/ingredient-requirements";
+
+const UNMAPPED_REASON_LABELS: Record<UnmappedReason, string> = {
+  no_recipe_linked: "No recipe linked — link a recipe on the menu item",
+  missing_base_yield: "Recipe linked, but missing a base yield quantity",
+  no_recipe_ingredients: "Recipe linked, but has no ingredients added",
+};
 
 export function RequirementsView({
   start,
@@ -35,6 +45,16 @@ export function RequirementsView({
 
   const rows: IngredientRequirement[] =
     selectedItemId === "all" ? result.requirements : selectedBreakdown?.ingredients ?? [];
+
+  const unmappedByReason = useMemo(() => {
+    const groups = new Map<UnmappedReason, typeof result.unmappedMenuItems>();
+    for (const u of result.unmappedMenuItems) {
+      const group = groups.get(u.reason);
+      if (group) group.push(u);
+      else groups.set(u.reason, [u]);
+    }
+    return groups;
+  }, [result.unmappedMenuItems]);
 
   return (
     <div className="mt-6">
@@ -92,15 +112,24 @@ export function RequirementsView({
           {result.unmappedMenuItems.length > 0 && (
             <div className="mt-6 rounded-2xl border border-destructive/40 bg-destructive/5 p-4">
               <p className="text-sm font-medium text-destructive">
-                Unmapped items — no recipe linked, excluded from totals below
+                Some items are excluded from totals below
               </p>
-              <ul className="mt-2 flex flex-col gap-1 text-sm text-muted-foreground">
-                {result.unmappedMenuItems.map((u) => (
-                  <li key={u.itemId}>
-                    {u.name} (×{u.orderedQty})
-                  </li>
+              <div className="mt-2 flex flex-col gap-3">
+                {Array.from(unmappedByReason.entries()).map(([reason, items]) => (
+                  <div key={reason}>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      {UNMAPPED_REASON_LABELS[reason]}
+                    </p>
+                    <ul className="mt-1 flex flex-col gap-1 text-sm text-muted-foreground">
+                      {items.map((u) => (
+                        <li key={u.itemId}>
+                          {u.name} (×{u.orderedQty})
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           )}
 
