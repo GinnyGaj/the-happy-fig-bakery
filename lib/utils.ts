@@ -30,6 +30,21 @@ export function formatUKWhatsAppNumber(phone: string): string {
   return stripped.startsWith("44") ? stripped : `44${stripped}`;
 }
 
+export function isPastDate(dateStr: string, today = new Date()) {
+  const d = new Date(`${dateStr}T00:00:00`);
+  const t = new Date(today);
+  t.setHours(0, 0, 0, 0);
+  return d.getTime() < t.getTime();
+}
+
+export function nextSaturday(from = new Date()) {
+  const d = new Date(from);
+  d.setHours(0, 0, 0, 0);
+  const daysUntilSaturday = (6 - d.getDay() + 7) % 7 || 7;
+  d.setDate(d.getDate() + daysUntilSaturday);
+  return d.toISOString().slice(0, 10);
+}
+
 export function currentWeekStart(date = new Date()) {
   const d = new Date(date);
   const day = d.getDay();

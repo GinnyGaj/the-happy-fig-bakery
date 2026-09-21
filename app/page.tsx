@@ -3,7 +3,7 @@ import { Footer } from "@/components/Footer";
 import { ButtonLink } from "@/components/ui/Button";
 import { MenuCard } from "@/components/MenuCard";
 import { getCurrentWeeklyMenu } from "@/lib/queries";
-import { formatDayDate, formatTimeOnly } from "@/lib/utils";
+import { formatDayDate, formatTimeOnly, isPastDate, nextSaturday } from "@/lib/utils";
 import { OrderPageClient } from "./order/OrderPageClient";
 
 export default async function Home() {
@@ -17,7 +17,9 @@ export default async function Home() {
   );
 
   const formOpen = Boolean(weeklyMenu?.form_open);
+  const pastPickup = Boolean(weeklyMenu?.pickup_date && isPastDate(weeklyMenu.pickup_date));
   const dayDate = weeklyMenu?.pickup_date ? formatDayDate(weeklyMenu.pickup_date) : null;
+  const nextCollectionDate = pastPickup ? formatDayDate(nextSaturday()) : null;
   const pickupTimeRange =
     weeklyMenu?.pickup_start_time && weeklyMenu?.pickup_end_time
       ? `${formatTimeOnly(weeklyMenu.pickup_start_time)}AM–${formatTimeOnly(weeklyMenu.pickup_end_time)}AM`
@@ -30,14 +32,24 @@ export default async function Home() {
         <div className="mx-auto max-w-5xl px-5 py-14">
           <h1 className="text-4xl">This week&apos;s menu</h1>
 
-          {dayDate && (
+          {pastPickup ? (
             <div className="mt-4 rounded-lg bg-accent px-4 py-3">
               <p className="text-base font-semibold uppercase tracking-wide sm:text-lg">
-                Collection: {dayDate}
+                Next collection: {nextCollectionDate}
                 {pickupTimeRange ? ` · ${pickupTimeRange}` : ""}
               </p>
               <p className="mt-1 text-base text-muted-foreground">Contactless payment available</p>
             </div>
+          ) : (
+            dayDate && (
+              <div className="mt-4 rounded-lg bg-accent px-4 py-3">
+                <p className="text-base font-semibold uppercase tracking-wide sm:text-lg">
+                  Collection: {dayDate}
+                  {pickupTimeRange ? ` · ${pickupTimeRange}` : ""}
+                </p>
+                <p className="mt-1 text-base text-muted-foreground">Contactless payment available</p>
+              </div>
+            )
           )}
 
           {!weeklyMenu || items.length === 0 ? (
@@ -54,7 +66,7 @@ export default async function Home() {
                   Pre-orders open every Thursday. Next menu coming soon!
                 </p>
               </div>
-              {weeklyMenu.announcement_message && (
+              {!pastPickup && weeklyMenu.announcement_message && (
                 <p className="mt-4 rounded-lg bg-accent px-4 py-3 text-base font-medium">
                   {weeklyMenu.announcement_message}
                 </p>
@@ -67,6 +79,7 @@ export default async function Home() {
                     soldOut={soldOutIds.has(item.id)}
                     remainingStock={stockByItem[item.id] ?? null}
                     readOnly
+                    pastPickup={pastPickup}
                   />
                 ))}
               </div>
@@ -81,6 +94,7 @@ export default async function Home() {
               pickupDate={weeklyMenu.pickup_date}
               pickupStartTime={weeklyMenu.pickup_start_time}
               pickupEndTime={weeklyMenu.pickup_end_time}
+              pastPickup={pastPickup}
             />
           )}
         </div>

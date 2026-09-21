@@ -18,6 +18,7 @@ export function OrderPageClient({
   pickupDate,
   pickupStartTime,
   pickupEndTime,
+  pastPickup = false,
 }: {
   weeklyMenuId: string;
   announcement: string | null;
@@ -27,6 +28,7 @@ export function OrderPageClient({
   pickupDate: string | null;
   pickupStartTime: string | null;
   pickupEndTime: string | null;
+  pastPickup?: boolean;
 }) {
   return (
     <CartProvider>
@@ -39,6 +41,7 @@ export function OrderPageClient({
         pickupDate={pickupDate}
         pickupStartTime={pickupStartTime}
         pickupEndTime={pickupEndTime}
+        pastPickup={pastPickup}
       />
     </CartProvider>
   );
@@ -53,6 +56,7 @@ function OrderPageInner({
   pickupDate,
   pickupStartTime,
   pickupEndTime,
+  pastPickup = false,
 }: {
   weeklyMenuId: string;
   announcement: string | null;
@@ -62,6 +66,7 @@ function OrderPageInner({
   pickupDate: string | null;
   pickupStartTime: string | null;
   pickupEndTime: string | null;
+  pastPickup?: boolean;
 }) {
   const router = useRouter();
   const { lines } = useCart();
@@ -117,7 +122,7 @@ function OrderPageInner({
 
   return (
     <>
-      {announcement && (
+      {!pastPickup && announcement && (
         <p className="mt-4 rounded-lg bg-accent px-4 py-3 text-base font-medium">{announcement}</p>
       )}
 
@@ -128,6 +133,7 @@ function OrderPageInner({
             item={item}
             soldOut={soldOut.has(item.id)}
             remainingStock={item.id in stockByItem ? stockByItem[item.id] : null}
+            pastPickup={pastPickup}
           />
         ))}
       </div>

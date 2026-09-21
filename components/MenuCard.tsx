@@ -15,11 +15,13 @@ export function MenuCard({
   soldOut = false,
   readOnly = false,
   remainingStock = null,
+  pastPickup = false,
 }: {
   item: MenuItem;
   soldOut?: boolean;
   readOnly?: boolean;
   remainingStock?: number | null;
+  pastPickup?: boolean;
 }) {
   const cart = useCartIfAvailable();
   const current = cart?.lines.find((l) => l.item.id === item.id)?.quantity ?? 0;
@@ -33,7 +35,7 @@ export function MenuCard({
   return (
     <div
       className={`paper flex flex-col overflow-hidden rounded-2xl border bg-card ${
-        soldOut
+        soldOut || pastPickup
           ? "border-border opacity-50 grayscale"
           : item.is_free_item && freeItemUnlocked
             ? "border-primary ring-1 ring-primary"
@@ -68,7 +70,7 @@ export function MenuCard({
           <p className="text-sm leading-relaxed text-muted-foreground">{item.description}</p>
         )}
         <div className="mt-auto pt-3">
-          {soldOut ? (
+          {pastPickup ? null : soldOut ? (
             <Badge variant="outline">Sold out</Badge>
           ) : !readOnly ? (
             <div className="flex flex-col gap-1.5">
