@@ -11,6 +11,11 @@ function parseMaxLimit(formData: FormData): number | null {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 }
 
+function parseRecipeId(formData: FormData): string | null {
+  const raw = formData.get("recipe_id") as string;
+  return raw && raw.trim() !== "" ? raw : null;
+}
+
 export async function createMenuItem(formData: FormData) {
   const supabase = await createClient();
 
@@ -24,6 +29,7 @@ export async function createMenuItem(formData: FormData) {
     dietary_tags,
     is_free_item: formData.get("is_free_item") === "on",
     max_limit: parseMaxLimit(formData),
+    recipe_id: parseRecipeId(formData),
   });
 
   if (error) throw new Error(error.message);
@@ -45,6 +51,7 @@ export async function updateMenuItem(id: string, formData: FormData) {
       dietary_tags,
       is_free_item: formData.get("is_free_item") === "on",
       max_limit: parseMaxLimit(formData),
+      recipe_id: parseRecipeId(formData),
       updated_at: new Date().toISOString(),
     })
     .eq("id", id);

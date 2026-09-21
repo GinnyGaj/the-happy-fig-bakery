@@ -1,5 +1,6 @@
 import { getOrCreateThisWeeksMenu, getAllOrders } from "@/lib/queries";
 import { formatTimeOnly } from "@/lib/utils";
+import { ButtonLink } from "@/components/ui/Button";
 import { OrdersTable } from "./OrdersTable";
 
 function formatPickupSlot(startTime: string | null, endTime: string | null) {
@@ -15,7 +16,12 @@ export default async function AdminOrdersPage() {
 
   return (
     <div className="max-w-5xl">
-      <h1 className="text-3xl">Orders</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-3xl">Orders</h1>
+        <ButtonLink href="/admin/orders/requirements" variant="secondary" className="h-10 px-5 text-sm">
+          Ingredient requirements
+        </ButtonLink>
+      </div>
       <OrdersTable orders={orders} pickupSlot={pickupSlot} />
     </div>
   );

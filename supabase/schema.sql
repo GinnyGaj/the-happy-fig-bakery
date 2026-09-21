@@ -523,6 +523,10 @@ create index if not exists idx_recipe_sections_recipe on recipe_sections(recipe_
 create index if not exists idx_recipe_ingredients_recipe on recipe_ingredients(recipe_id, sort_order);
 create index if not exists idx_recipe_steps_recipe on recipe_steps(recipe_id, stage, step_number);
 
+-- Migration: link a menu item to the recipe that produces it, so ordered
+-- quantities can be walked through to ingredient requirements.
+alter table menu_items add column if not exists recipe_id uuid references recipes(id);
+
 alter table recipes enable row level security;
 alter table recipe_sections enable row level security;
 alter table recipe_ingredients enable row level security;

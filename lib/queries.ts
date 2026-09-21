@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { currentWeekStart } from "@/lib/utils";
-import type { MenuItem, WeeklyMenu, StockLimit } from "@/lib/types";
+import type { MenuItem, Order, WeeklyMenu, StockLimit } from "@/lib/types";
 
 export async function getCurrentWeeklyMenu(): Promise<{
   weeklyMenu: WeeklyMenu | null;
@@ -121,6 +121,17 @@ export async function getAllOrders() {
     .select("*")
     .order("created_at", { ascending: false });
   return data ?? [];
+}
+
+export async function getOrdersByPickupDateRange(start: string, end: string): Promise<Order[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("orders")
+    .select("*")
+    .gte("pickup_date", start)
+    .lte("pickup_date", end)
+    .order("pickup_date", { ascending: true });
+  return (data ?? []) as Order[];
 }
 
 export async function getOrdersForWeek(weeklyMenuId: string) {

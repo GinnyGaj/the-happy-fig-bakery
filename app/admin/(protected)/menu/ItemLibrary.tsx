@@ -2,16 +2,16 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Field, Input, Textarea } from "@/components/ui/Input";
+import { Field, Input, Select, Textarea } from "@/components/ui/Input";
 import { Button, SubmitButton } from "@/components/ui/Button";
 import { formatPrice } from "@/lib/utils";
 import { createMenuItem, updateMenuItem, deleteMenuItem } from "@/lib/actions/menu";
 import { createClient } from "@/lib/supabase/client";
-import type { DietaryTag, MenuItem } from "@/lib/types";
+import type { DietaryTag, MenuItem, Recipe } from "@/lib/types";
 
 const TAGS: DietaryTag[] = ["vegetarian", "vegan", "gluten-free", "nut-free"];
 
-export function ItemLibrary({ items }: { items: MenuItem[] }) {
+export function ItemLibrary({ items, recipes }: { items: MenuItem[]; recipes: Recipe[] }) {
   const [editing, setEditing] = useState<MenuItem | null>(null);
   const [adding, setAdding] = useState(false);
 
@@ -29,6 +29,7 @@ export function ItemLibrary({ items }: { items: MenuItem[] }) {
       {(adding || editing) && (
         <ItemForm
           item={editing}
+          recipes={recipes}
           onDone={() => {
             setAdding(false);
             setEditing(null);
@@ -81,7 +82,15 @@ export function ItemLibrary({ items }: { items: MenuItem[] }) {
   );
 }
 
-function ItemForm({ item, onDone }: { item: MenuItem | null; onDone: () => void }) {
+function ItemForm({
+  item,
+  recipes,
+  onDone,
+}: {
+  item: MenuItem | null;
+  recipes: Recipe[];
+  onDone: () => void;
+}) {
   const [imageUrl, setImageUrl] = useState(item?.image_url ?? "");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -141,6 +150,16 @@ function ItemForm({ item, onDone }: { item: MenuItem | null; onDone: () => void 
       </Field>
       <Field label="Description" htmlFor="description">
         <Textarea id="description" name="description" defaultValue={item?.description ?? ""} />
+      </Field>
+      <Field label="Recipe" htmlFor="recipe_id">
+        <Select id="recipe_id" name="recipe_id" defaultValue={item?.recipe_id ?? ""}>
+          <option value="">No recipe linked</option>
+          {recipes.map((recipe) => (
+            <option key={recipe.id} value={recipe.id}>
+              {recipe.name}
+            </option>
+          ))}
+        </Select>
       </Field>
       <div>
         <p className="text-sm font-medium">Photo</p>

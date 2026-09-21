@@ -28,6 +28,32 @@ export async function getRecipeIngredients(
   return (data ?? []) as (RecipeIngredient & { inventory_items: { name: string; unit: string } })[];
 }
 
+export async function getRecipeIngredientsForRecipes(
+  recipeIds: string[]
+): Promise<Map<string, (RecipeIngredient & { inventory_items: { name: string; unit: string } })[]>> {
+  const map = new Map<
+    string,
+    (RecipeIngredient & { inventory_items: { name: string; unit: string } })[]
+  >();
+  if (recipeIds.length === 0) return map;
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("recipe_ingredients")
+    .select("*, inventory_items(name, unit)")
+    .in("recipe_id", recipeIds)
+    .order("sort_order", { ascending: true });
+
+  for (const row of (data ?? []) as (RecipeIngredient & {
+    inventory_items: { name: string; unit: string };
+  })[]) {
+    const existing = map.get(row.recipe_id);
+    if (existing) existing.push(row);
+    else map.set(row.recipe_id, [row]);
+  }
+  return map;
+}
+
 export async function getRecipeSections(recipeId: string): Promise<RecipeSection[]> {
   const supabase = await createClient();
   const { data } = await supabase

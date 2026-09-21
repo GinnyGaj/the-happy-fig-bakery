@@ -1,11 +1,13 @@
 import { getAllMenuItems, getOrCreateThisWeeksMenu } from "@/lib/queries";
+import { getAllRecipes } from "@/lib/recipe-queries";
 import { ItemLibrary } from "./ItemLibrary";
 import { WeeklyCuration } from "./WeeklyCuration";
 
 export default async function AdminMenuPage() {
-  const [items, weeklyMenu] = await Promise.all([
+  const [items, weeklyMenu, recipes] = await Promise.all([
     getAllMenuItems(),
     getOrCreateThisWeeksMenu(),
+    getAllRecipes(),
   ]);
 
   return (
@@ -18,7 +20,7 @@ export default async function AdminMenuPage() {
       </div>
 
       <WeeklyCuration items={items} weeklyMenu={weeklyMenu} />
-      <ItemLibrary items={items} />
+      <ItemLibrary items={items} recipes={recipes} />
     </div>
   );
 }

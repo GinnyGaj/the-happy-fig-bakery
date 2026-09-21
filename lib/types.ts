@@ -9,6 +9,7 @@ export interface MenuItem {
   dietary_tags: DietaryTag[];
   is_free_item: boolean;
   max_limit: number | null;
+  recipe_id: string | null;
   created_at: string;
   updated_at: string;
 }
