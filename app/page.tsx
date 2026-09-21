@@ -38,6 +38,9 @@ export default async function Home() {
                 Next collection: {nextCollectionDate}
                 {pickupTimeRange ? ` · ${pickupTimeRange}` : ""}
               </p>
+              <p className="mt-1 text-base text-muted-foreground">
+                Pre-ordering is now closed — orders reopen Thursday at 6 PM
+              </p>
               <p className="mt-1 text-base text-muted-foreground">Contactless payment available</p>
             </div>
           ) : (
