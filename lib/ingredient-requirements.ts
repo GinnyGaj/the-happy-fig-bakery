@@ -5,6 +5,25 @@ export interface IngredientRequirement {
   name: string;
   unit: string;
   totalQuantity: number;
+  onHand: number;
+  surplusOrDeficit: number;
+  isLowStock: boolean;
+}
+
+/** Attention threshold: flag anything below required + 10% buffer. */
+const STOCK_BUFFER = 1.1;
+
+function withStock(
+  item: { inventoryItemId: string; name: string; unit: string; totalQuantity: number },
+  stockByItemId: Map<string, number>
+): IngredientRequirement {
+  const onHand = stockByItemId.get(item.inventoryItemId) ?? 0;
+  return {
+    ...item,
+    onHand,
+    surplusOrDeficit: onHand - item.totalQuantity,
+    isLowStock: onHand < item.totalQuantity * STOCK_BUFFER,
+  };
 }
 
 export type UnmappedReason = "no_recipe_linked" | "missing_base_yield" | "no_recipe_ingredients";
@@ -43,7 +62,8 @@ export function computeIngredientRequirements(
   orders: Order[],
   menuItemRecipeMap: MenuItemRecipeMap,
   recipeIngredientsMap: RecipeIngredientsMap,
-  menuItemsById: Map<string, MenuItem>
+  menuItemsById: Map<string, MenuItem>,
+  stockByItemId: Map<string, number> = new Map()
 ): IngredientRequirementsResult {
   const orderedQtyByItem = new Map<string, number>();
   for (const order of orders) {
@@ -80,12 +100,17 @@ export function computeIngredientRequirements(
     }
 
     const scaleFactor = orderedQty / mapping.baseYieldQty;
-    const ingredients: IngredientRequirement[] = recipeIngredients.map((ingredient) => ({
-      inventoryItemId: ingredient.inventory_item_id,
-      name: ingredient.inventory_items.name,
-      unit: ingredient.inventory_items.unit,
-      totalQuantity: ingredient.base_weight_grams * scaleFactor,
-    }));
+    const ingredients: IngredientRequirement[] = recipeIngredients.map((ingredient) =>
+      withStock(
+        {
+          inventoryItemId: ingredient.inventory_item_id,
+          name: ingredient.inventory_items.name,
+          unit: ingredient.inventory_items.unit,
+          totalQuantity: ingredient.base_weight_grams * scaleFactor,
+        },
+        stockByItemId
+      )
+    );
 
     byMenuItem.push({ itemId, itemName, orderedQty, ingredients });
 
@@ -94,14 +119,14 @@ export function computeIngredientRequirements(
       if (existing) {
         existing.totalQuantity += ingredient.totalQuantity;
       } else {
-        totalsByInventoryItem.set(ingredient.inventoryItemId, { ...ingredient });
+        totalsByInventoryItem.set(ingredient.inventoryItemId, { ...ingredient, totalQuantity: ingredient.totalQuantity });
       }
     }
   }
 
-  const requirements = Array.from(totalsByInventoryItem.values()).sort((a, b) =>
-    a.name.localeCompare(b.name)
-  );
+  const requirements = Array.from(totalsByInventoryItem.values())
+    .map((item) => withStock(item, stockByItemId))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   return { requirements, byMenuItem, unmappedMenuItems };
 }

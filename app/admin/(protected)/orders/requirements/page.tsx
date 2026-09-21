@@ -1,5 +1,6 @@
 import { getAllMenuItems, getOrdersByPickupDateRange } from "@/lib/queries";
 import { getAllRecipes, getRecipeIngredientsForRecipes } from "@/lib/recipe-queries";
+import { getInventoryWithStock } from "@/lib/inventory-queries";
 import { computeIngredientRequirements } from "@/lib/ingredient-requirements";
 import { RequirementsView } from "./RequirementsView";
 
@@ -10,7 +11,12 @@ export default async function IngredientRequirementsPage({
 }) {
   const { start, end } = await searchParams;
 
-  const [menuItems, recipes] = await Promise.all([getAllMenuItems(), getAllRecipes()]);
+  const [menuItems, recipes, inventoryStock] = await Promise.all([
+    getAllMenuItems(),
+    getAllRecipes(),
+    getInventoryWithStock(),
+  ]);
+  const stockByItemId = new Map(inventoryStock.map((s) => [s.inventory_item_id, s.current_stock]));
   const recipesById = new Map(recipes.map((r) => [r.id, r]));
   const menuItemsById = new Map(menuItems.map((m) => [m.id, m]));
 
@@ -29,7 +35,7 @@ export default async function IngredientRequirementsPage({
   const recipeIngredientsMap = await getRecipeIngredientsForRecipes(recipeIds);
 
   const result = orders.length
-    ? computeIngredientRequirements(orders, menuItemRecipeMap, recipeIngredientsMap, menuItemsById)
+    ? computeIngredientRequirements(orders, menuItemRecipeMap, recipeIngredientsMap, menuItemsById, stockByItemId)
     : { requirements: [], byMenuItem: [], unmappedMenuItems: [] };
 
   return (

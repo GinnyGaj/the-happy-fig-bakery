@@ -140,19 +140,32 @@ export function RequirementsView({
                   <th className="px-4 py-3">Ingredient</th>
                   <th className="px-4 py-3">Unit</th>
                   <th className="px-4 py-3">Total needed</th>
+                  <th className="px-4 py-3">In stock</th>
+                  <th className="px-4 py-3">Surplus / deficit</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <tr key={r.inventoryItemId} className="border-b border-border last:border-0">
+                  <tr
+                    key={r.inventoryItemId}
+                    className={`border-b border-border last:border-0 ${
+                      r.isLowStock ? "bg-destructive/5 font-medium text-destructive" : ""
+                    }`}
+                  >
                     <td className="px-4 py-3">{r.name}</td>
                     <td className="px-4 py-3">{r.unit}</td>
                     <td className="px-4 py-3">{r.totalQuantity.toFixed(1)}</td>
+                    <td className="px-4 py-3">{r.onHand.toFixed(1)}</td>
+                    <td className="px-4 py-3">
+                      {r.surplusOrDeficit > 0 ? "+" : ""}
+                      {r.surplusOrDeficit.toFixed(1)}
+                      {r.isLowStock ? " — need to buy" : ""}
+                    </td>
                   </tr>
                 ))}
                 {rows.length === 0 && (
                   <tr>
-                    <td colSpan={3} className="px-4 py-6 text-center text-muted-foreground">
+                    <td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">
                       No ingredient requirements for this selection.
                     </td>
                   </tr>
