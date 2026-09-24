@@ -57,7 +57,7 @@ export function OrderSummary({
           <span>{formatPrice(subtotal)}</span>
         </div>
       </div>
-      {pickupInfoAvailable && (
+      {pickupDate && pickupStartTime && pickupEndTime && (
         <label className="mt-4 flex items-start gap-2 text-base">
           <input
             type="checkbox"
