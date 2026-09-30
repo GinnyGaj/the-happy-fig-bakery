@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { currentWeekStart } from "@/lib/utils";
-import type { MenuItem, Order, WeeklyMenu, StockLimit } from "@/lib/types";
+import type { MenuItem, Order, WeeklyMenu, StockLimit, DailyMadeQuantity } from "@/lib/types";
 
 export async function getCurrentWeeklyMenu(): Promise<{
   weeklyMenu: WeeklyMenu | null;
@@ -142,4 +142,35 @@ export async function getOrdersForWeek(weeklyMenuId: string) {
     .eq("weekly_menu_id", weeklyMenuId)
     .order("created_at", { ascending: false });
   return data ?? [];
+}
+
+export async function getOrdersForPickupDate(pickupDate: string): Promise<Order[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("orders")
+    .select("*")
+    .eq("pickup_date", pickupDate)
+    .order("created_at", { ascending: true });
+  return (data ?? []) as Order[];
+}
+
+export async function getDistinctPickupDates(): Promise<string[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("orders")
+    .select("pickup_date")
+    .order("pickup_date", { ascending: false });
+  const unique = Array.from(new Set((data ?? []).map((row) => row.pickup_date as string)));
+  return unique;
+}
+
+export async function getMadeQuantitiesForPickupDate(
+  pickupDate: string
+): Promise<DailyMadeQuantity[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("daily_made_quantities")
+    .select("*")
+    .eq("pickup_date", pickupDate);
+  return (data ?? []) as DailyMadeQuantity[];
 }

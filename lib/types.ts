@@ -48,6 +48,8 @@ export interface OrderItem {
 
 export type OrderStatus = "pending" | "ready" | "collected";
 
+export type PaymentMethod = "cash" | "card" | "free";
+
 export interface Order {
   id: string;
   weekly_menu_id: string;
@@ -60,6 +62,20 @@ export interface Order {
   special_instructions: string | null;
   status: OrderStatus;
   reminder_sent: boolean;
+  payment_method: PaymentMethod | null;
+  collected_at: string | null;
+  collected_by: string | null;
+  collection_notes: string | null;
+  coming_later: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DailyMadeQuantity {
+  id: string;
+  pickup_date: string;
+  item_name: string;
+  made_quantity: number;
   created_at: string;
   updated_at: string;
 }

@@ -536,3 +536,34 @@ create policy "recipes admin only" on recipes for all using (auth.role() = 'auth
 create policy "recipe_sections admin only" on recipe_sections for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 create policy "recipe_ingredients admin only" on recipe_ingredients for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 create policy "recipe_steps admin only" on recipe_steps for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+
+-- Migration: Collections page — record how an order was collected (payment
+-- method, who collected it, when, and any notes) and let the admin flag an
+-- order as "coming later" so it can be filtered out of the pending list.
+alter table orders add column if not exists payment_method varchar(20);
+alter table orders add column if not exists collected_at timestamptz;
+alter table orders add column if not exists collected_by text;
+alter table orders add column if not exists collection_notes text;
+alter table orders add column if not exists coming_later boolean not null default false;
+
+alter table orders drop constraint if exists orders_payment_method_check;
+alter table orders add constraint orders_payment_method_check
+  check (payment_method is null or payment_method in ('cash', 'card', 'free'));
+
+-- Tracks how many of each item were actually baked for a given pickup date,
+-- so extras (made - ordered) can be worked out against the sum of order_items
+-- quantities for that date. Keyed by pickup_date + item name since order_items
+-- is a jsonb array (not a foreign-keyed table) and menu items can vary week to
+-- week.
+create table if not exists daily_made_quantities (
+  id uuid primary key default gen_random_uuid(),
+  pickup_date date not null,
+  item_name text not null,
+  made_quantity int not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (pickup_date, item_name)
+);
+
+alter table daily_made_quantities enable row level security;
+create policy "daily_made_quantities admin only" on daily_made_quantities for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
