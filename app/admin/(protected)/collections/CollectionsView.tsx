@@ -55,6 +55,17 @@ export function CollectionsView({
     return map;
   }, [madeQuantities]);
 
+  const collectedByItem = useMemo(() => {
+    const totals = new Map<string, number>();
+    for (const order of orders) {
+      if (order.status !== "collected") continue;
+      for (const item of order.order_items) {
+        totals.set(item.name, (totals.get(item.name) ?? 0) + item.quantity);
+      }
+    }
+    return totals;
+  }, [orders]);
+
   const itemNames = useMemo(() => {
     const names = new Set<string>([...orderedByItem.keys(), ...madeByItem.keys()]);
     return Array.from(names).sort((a, b) => a.localeCompare(b));
@@ -160,6 +171,7 @@ export function CollectionsView({
                 <th className="px-4 py-3">Ordered</th>
                 <th className="px-4 py-3">Made</th>
                 <th className="px-4 py-3">Extras</th>
+                <th className="px-4 py-3">Remaining to collect</th>
               </tr>
             </thead>
             <tbody>
@@ -167,6 +179,7 @@ export function CollectionsView({
                 const ordered = orderedByItem.get(name) ?? 0;
                 const made = madeByItem.get(name) ?? 0;
                 const extras = made - ordered;
+                const remaining = ordered - (collectedByItem.get(name) ?? 0);
                 return (
                   <tr key={name} className="border-b border-border last:border-0">
                     <td className="px-4 py-3">{name}</td>
@@ -188,12 +201,13 @@ export function CollectionsView({
                     >
                       {extras}
                     </td>
+                    <td className="px-4 py-3 font-medium">{remaining}</td>
                   </tr>
                 );
               })}
               {itemNames.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">
+                  <td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">
                     No orders for this collection day yet.
                   </td>
                 </tr>
