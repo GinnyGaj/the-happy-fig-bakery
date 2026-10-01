@@ -8,8 +8,20 @@ import { formatPrice, formatUKWhatsAppNumber } from "@/lib/utils";
 import { deleteOrder, markReminderSent } from "@/lib/actions/orders";
 import type { Order } from "@/lib/types";
 
-const DEFAULT_REMINDER_TEMPLATE =
-  "Hi {firstName}! 🥖 Quick reminder that your Happy Fig order ({itemsSummary}) is ready for pickup today during your slot ({pickupSlot}) at our doorstep on Boundary Road. Total: {totalCost}.";
+const DEFAULT_REMINDER_TEMPLATE = `Hi {firstName}!
+
+Quick reminder that your Happy Fig order will be ready for pickup today between *9:30 & 11:30 am*.
+
+Order: {itemsSummary}
+Order Total: {totalCost} (contactless payments accepted)
+Pickup Address: 185 Boundary Road, N22 6AL.
+
+*Ingredients*
+Allergen Advice: Gluten (Wheat) and Dairy (Milk). Made in a kitchen with allergens.
+
+•⁠  ⁠*Tomato Rosemary Focaccia*: Bread flour, yeast, olive oil, salt, cherry tomatoes, rosemary
+•⁠  ⁠*Chocolate Chip Cookie*: ⁠Plain flour, unsalted butter, heavy cream, salt, baking soda, dark brown sugar, granulated sugar, vanilla, dark chocolate, milk chocolate, eggs
+•⁠  ⁠*Cinnamon Buns*: Bread Flour, yeast, salt, sugar, butter, cinnamon, milk, vanilla essence, eggs`;
 
 function itemsSummary(order: Order) {
   return order.order_items.map((i) => `${i.name} ×${i.quantity}`).join(", ");
