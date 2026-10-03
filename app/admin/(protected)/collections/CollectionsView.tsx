@@ -175,10 +175,10 @@ export function CollectionsView({
             <thead className="border-b border-border text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">Item</th>
+                <th className="px-4 py-3">Remaining to collect</th>
+                <th className="px-4 py-3">Extras</th>
                 <th className="px-4 py-3">Ordered</th>
                 <th className="px-4 py-3">Made</th>
-                <th className="px-4 py-3">Extras</th>
-                <th className="px-4 py-3">Remaining to collect</th>
               </tr>
             </thead>
             <tbody>
@@ -190,6 +190,14 @@ export function CollectionsView({
                 return (
                   <tr key={name} className="border-b border-border last:border-0">
                     <td className="px-4 py-3">{name}</td>
+                    <td className="px-4 py-3 font-medium">{remaining}</td>
+                    <td
+                      className={`px-4 py-3 font-medium ${
+                        extras < 0 ? "text-destructive" : "text-foreground"
+                      }`}
+                    >
+                      {extras}
+                    </td>
                     <td className="px-4 py-3">{ordered}</td>
                     <td className="px-4 py-3">
                       <Input
@@ -201,14 +209,6 @@ export function CollectionsView({
                         className="h-9 w-24 text-sm"
                       />
                     </td>
-                    <td
-                      className={`px-4 py-3 font-medium ${
-                        extras < 0 ? "text-destructive" : "text-foreground"
-                      }`}
-                    >
-                      {extras}
-                    </td>
-                    <td className="px-4 py-3 font-medium">{remaining}</td>
                   </tr>
                 );
               })}
@@ -335,7 +335,7 @@ function PendingOrderCard({
   collecting: boolean;
   setCollecting: (v: boolean) => void;
 }) {
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
   const [collectedBy, setCollectedBy] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
@@ -370,7 +370,7 @@ function PendingOrderCard({
               </span>
             )}
           </p>
-          <p className="text-sm text-muted-foreground">{itemsSummary(order)}</p>
+          <p className="text-muted-foreground">{itemsSummary(order)}</p>
           <p className="text-sm text-muted-foreground">{formatPrice(order.order_subtotal)}</p>
         </div>
         <div className="flex flex-wrap gap-2">
