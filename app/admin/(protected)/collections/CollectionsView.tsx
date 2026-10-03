@@ -149,16 +149,6 @@ export function CollectionsView({
             className="h-10 w-full text-sm sm:w-auto"
           />
         </label>
-        <label className="flex flex-col gap-1 text-sm text-muted-foreground">
-          Search customer
-          <Input
-            type="text"
-            placeholder="Search by customer name"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="h-10 w-full text-sm sm:w-56"
-          />
-        </label>
       </div>
 
       <section className="rounded-2xl border border-border bg-card p-4">
@@ -246,6 +236,13 @@ export function CollectionsView({
             Hide &quot;coming later&quot;
           </label>
         </div>
+        <Input
+          type="text"
+          placeholder="Search by customer name"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="mt-3 h-10 w-full text-sm sm:w-56"
+        />
         <div className="mt-3 flex flex-col gap-3">
           {visiblePendingOrders.map((order) => (
             <PendingOrderCard
