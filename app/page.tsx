@@ -65,7 +65,7 @@ export default async function Home() {
           ) : !formOpen ? (
             <>
               <div className="mt-6 rounded-2xl border-2 border-primary bg-primary/10 px-6 py-5 text-center shadow-sm">
-                <p className="text-lg font-semibold text-primary sm:text-xl">
+                <p className="text-base font-semibold text-primary sm:text-lg">
                   PRE-ORDERING IS NOW CLOSED - ORDERS RE-OPEN THURSDAY AT 7 PM
                 </p>
               </div>
