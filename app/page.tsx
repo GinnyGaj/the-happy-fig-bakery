@@ -30,7 +30,7 @@ export default async function Home() {
       <Header />
       <main className="flex-1">
         <div className="mx-auto max-w-5xl px-5 py-14">
-          <h1 className="text-4xl">This week&apos;s menu</h1>
+          <h1 className="text-4xl">Weekly menu</h1>
 
           {pastPickup ? (
             <div className="mt-4 rounded-lg bg-accent px-4 py-3">
@@ -39,7 +39,7 @@ export default async function Home() {
                 {pickupTimeRange ? ` · ${pickupTimeRange}` : ""}
               </p>
               <p className="mt-1 text-base text-muted-foreground">
-                Pre-ordering is now closed — orders reopen Thursday at 6 PM
+                PRE-ORDERING IS NOW CLOSED - ORDERS RE-OPEN THURSDAY AT 7 PM
               </p>
               <p className="mt-1 text-base text-muted-foreground">Contactless payment available</p>
             </div>
@@ -66,7 +66,7 @@ export default async function Home() {
             <>
               <div className="mt-6 rounded-2xl border-2 border-primary bg-primary/10 px-6 py-5 text-center shadow-sm">
                 <p className="text-lg font-semibold text-primary sm:text-xl">
-                  Pre-orders open every Thursday. Next menu coming soon!
+                  PRE-ORDERING IS NOW CLOSED - ORDERS RE-OPEN THURSDAY AT 7 PM
                 </p>
               </div>
               {!pastPickup && weeklyMenu.announcement_message && (
