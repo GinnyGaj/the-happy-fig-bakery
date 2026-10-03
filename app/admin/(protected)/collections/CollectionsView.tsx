@@ -33,6 +33,7 @@ export function CollectionsView({
   const router = useRouter();
   const [dateInput, setDateInput] = useState(pickupDate);
   const [hideComingLater, setHideComingLater] = useState(false);
+  const [search, setSearch] = useState("");
   const [collectingId, setCollectingId] = useState<string | null>(null);
   const [savingItem, setSavingItem] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -71,10 +72,16 @@ export function CollectionsView({
     return Array.from(names).sort((a, b) => a.localeCompare(b));
   }, [orderedByItem, madeByItem]);
 
-  const pendingOrders = orders.filter((o) => o.status !== "collected");
+  const searchQuery = search.trim().toLowerCase();
+  const matchesSearch = (order: Order) =>
+    !searchQuery || customerName(order).toLowerCase().includes(searchQuery);
+
+  const pendingOrders = orders.filter((o) => o.status !== "collected" && matchesSearch(o));
   const visiblePendingOrders = hideComingLater
     ? pendingOrders.filter((o) => !o.coming_later)
     : pendingOrders;
+
+  const collectedOrders = orders.filter((o) => o.status === "collected" && matchesSearch(o));
 
   const expectedRevenue = orders.reduce((sum, o) => sum + o.order_subtotal, 0);
   const collectedRevenue = orders
@@ -140,6 +147,16 @@ export function CollectionsView({
               goToDate(e.target.value);
             }}
             className="h-10 w-full text-sm sm:w-auto"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-sm text-muted-foreground">
+          Search customer
+          <Input
+            type="text"
+            placeholder="Search by customer name"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-10 w-full text-sm sm:w-56"
           />
         </label>
       </div>
@@ -264,8 +281,7 @@ export function CollectionsView({
               </tr>
             </thead>
             <tbody>
-              {orders
-                .filter((o) => o.status === "collected")
+              {collectedOrders
                 .map((order) => (
                   <tr key={order.id} className="border-b border-border last:border-0">
                     <td className="px-4 py-3">{customerName(order)}</td>
@@ -292,7 +308,7 @@ export function CollectionsView({
                     </td>
                   </tr>
                 ))}
-              {orders.filter((o) => o.status === "collected").length === 0 && (
+              {collectedOrders.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">
                     Nothing collected yet.
