@@ -81,8 +81,9 @@ function ExternalLinkIconButton({
 export function ExternalLinkButtons() {
   return (
     <div className="flex flex-none items-center gap-2">
-      <ExternalLinkIconButton href={MAPS_URL} icon={<GoogleMapsIcon />} label="Find us on Google Maps" />
-      <ExternalLinkIconButton href={WHATSAPP_URL} icon={<WhatsAppIcon />} label="Join our WhatsApp Group" />
+      {/* Hidden for now — keep for future use */}
+      {/* <ExternalLinkIconButton href={MAPS_URL} icon={<GoogleMapsIcon />} label="Find us on Google Maps" /> */}
+      {/* <ExternalLinkIconButton href={WHATSAPP_URL} icon={<WhatsAppIcon />} label="Join our WhatsApp Group" /> */}
       <ExternalLinkIconButton href={INSTAGRAM_URL} icon={<InstagramIcon />} label="Follow us on Instagram" />
     </div>
   );
