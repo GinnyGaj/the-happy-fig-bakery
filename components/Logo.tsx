@@ -28,24 +28,27 @@ export function LogoV2({ className }: { className?: string }) {
         strokeWidth="2.5"
       />
 
-      <g transform="translate(200, 128)" stroke="var(--foreground)" strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+      <g transform="translate(200, 150)" stroke="var(--foreground)" strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+        {/* chimney */}
+        <rect x="10" y="-54" width="10" height="20" fill="var(--card)" />
         {/* chimney smoke */}
-        <path d="M 13 -38 C 10 -42, 16 -46, 13 -50" />
+        <path d="M 19 -58 C 16 -62, 21 -65, 18 -69" strokeWidth="1.6" />
         {/* roof */}
-        <path d="M -32 -8 L 0 -32 L 32 -8" fill="var(--accent)" />
-        <path d="M 6 -30 L 6 -40 L 16 -40 L 16 -22" fill="var(--accent)" />
+        <path d="M -40 -8 L 0 -44 L 40 -8 Z" fill="var(--accent)" strokeLinejoin="round" />
         {/* house body */}
-        <rect x="-24" y="-8" width="48" height="36" fill="var(--card)" />
+        <rect x="-28" y="-8" width="56" height="42" fill="var(--card)" />
         {/* door */}
-        <path d="M -8 28 L -8 10 C -8 4, -2 1, 3 1 C 8 1, 8 8, 8 10 L 8 28" fill="none" />
+        <path d="M -14 34 L -14 12 C -14 5, -8 1, -3 1 C 2 1, 8 5, 8 12 L 8 34" fill="none" />
         {/* window */}
-        <rect x="10" y="4" width="12" height="12" />
-        <line x1="16" y1="4" x2="16" y2="16" />
-        <line x1="10" y1="10" x2="22" y2="10" />
-        {/* ground line + flower */}
-        <line x1="-28" y1="28" x2="30" y2="28" />
-        <path d="M 24 28 C 22 20, 26 16, 28 10" strokeWidth="1.5" />
-        <circle cx="28.5" cy="9" r="1.6" fill="var(--foreground)" stroke="none" />
+        <rect x="11" y="6" width="14" height="14" fill="none" />
+        <line x1="18" y1="6" x2="18" y2="20" strokeWidth="1.6" />
+        <line x1="11" y1="13" x2="25" y2="13" strokeWidth="1.6" />
+        {/* ground line */}
+        <line x1="-34" y1="34" x2="34" y2="34" />
+        {/* sprig */}
+        <path d="M 32 34 C 32 27, 36 24, 35 17" strokeWidth="1.6" />
+        <path d="M 35 17 C 33 17, 31 15, 31 13" strokeWidth="1.4" />
+        <path d="M 35 17 C 37 16, 38 14, 38 12" strokeWidth="1.4" />
       </g>
 
       <text
