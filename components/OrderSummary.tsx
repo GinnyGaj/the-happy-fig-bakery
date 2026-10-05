@@ -65,8 +65,9 @@ export function OrderSummary({
             className="mt-0.5 h-4 w-4 shrink-0"
           />
           <span>
-            I can pick up the order on {formatDayDate(pickupDate)} between{" "}
-            {formatTimeOnly(pickupStartTime)} AM and {formatTimeOnly(pickupEndTime)} AM
+            I can pick up the order from 185 Boundary Road, N226AL on{" "}
+            {formatDayDate(pickupDate)} between {formatTimeOnly(pickupStartTime)} AM and{" "}
+            {formatTimeOnly(pickupEndTime)} AM
           </span>
         </label>
       )}
