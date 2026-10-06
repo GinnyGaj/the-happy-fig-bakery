@@ -13,6 +13,9 @@ const orderSchema = z.object({
     .trim()
     .regex(/^(\+44|0)[0-9\s]{9,13}$/, "Please enter a valid UK WhatsApp number."),
   specialInstructions: z.string().trim().optional(),
+  wantsHomeDelivery: z.boolean().optional(),
+  deliveryAddress: z.string().trim().optional(),
+  deliveryReason: z.string().trim().optional(),
   items: z
     .array(
       z.object({
@@ -23,7 +26,13 @@ const orderSchema = z.object({
       })
     )
     .min(1, "Please choose at least one bake."),
-});
+}).refine(
+  (data) => !data.wantsHomeDelivery || !!data.deliveryAddress,
+  { message: "Please enter the address to deliver to.", path: ["deliveryAddress"] }
+).refine(
+  (data) => !data.wantsHomeDelivery || !!data.deliveryReason,
+  { message: "Please give a quick reason for the delivery request.", path: ["deliveryReason"] }
+);
 
 export interface PlaceOrderState {
   error?: string;
@@ -47,8 +56,17 @@ export async function placeOrder(
     return { error: "Please check the form and try again.", fieldErrors };
   }
 
-  const { weeklyMenuId, firstName, lastName, whatsapp, specialInstructions, items } =
-    parsed.data;
+  const {
+    weeklyMenuId,
+    firstName,
+    lastName,
+    whatsapp,
+    specialInstructions,
+    wantsHomeDelivery,
+    deliveryAddress,
+    deliveryReason,
+    items,
+  } = parsed.data;
 
   const supabase = createServiceClient();
 
@@ -91,6 +109,9 @@ export async function placeOrder(
       p_special_instructions: specialInstructions || null,
       p_items: items satisfies OrderItem[],
       p_subtotal: subtotal,
+      p_wants_home_delivery: wantsHomeDelivery ?? false,
+      p_delivery_address: wantsHomeDelivery ? deliveryAddress || null : null,
+      p_delivery_reason: wantsHomeDelivery ? deliveryReason || null : null,
     })
     .single();
 

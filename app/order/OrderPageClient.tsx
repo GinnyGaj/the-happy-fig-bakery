@@ -74,6 +74,7 @@ function OrderPageInner({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [pickupConfirmed, setPickupConfirmed] = useState(false);
+  const [wantsHomeDelivery, setWantsHomeDelivery] = useState(false);
   const soldOut = new Set(soldOutIds);
 
   async function handleSubmit() {
@@ -90,6 +91,9 @@ function OrderPageInner({
       lastName: formData.get("lastName"),
       whatsapp: formData.get("whatsapp"),
       specialInstructions: formData.get("specialInstructions"),
+      wantsHomeDelivery,
+      deliveryAddress: wantsHomeDelivery ? formData.get("deliveryAddress") : undefined,
+      deliveryReason: wantsHomeDelivery ? formData.get("deliveryReason") : undefined,
       items: lines.map((l) => ({
         item_id: l.item.id,
         name: l.item.name,
@@ -199,6 +203,58 @@ function OrderPageInner({
           >
             <Textarea id="specialInstructions" name="specialInstructions" className="text-lg" />
           </Field>
+
+          <label className="flex items-start gap-2 text-base">
+            <input
+              type="checkbox"
+              checked={wantsHomeDelivery}
+              onChange={(e) => setWantsHomeDelivery(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0"
+            />
+            <span>
+              I need home delivery (only for customers who genuinely can&apos;t collect their
+              order — disability, young children, etc.)
+            </span>
+          </label>
+
+          {wantsHomeDelivery && (
+            <>
+              <Field
+                label="Delivery address"
+                htmlFor="deliveryAddress"
+                error={errors.deliveryAddress}
+                labelClassName="text-base font-medium text-foreground"
+                errorClassName="text-base text-destructive"
+              >
+                <Textarea
+                  id="deliveryAddress"
+                  name="deliveryAddress"
+                  required
+                  className="text-lg"
+                />
+              </Field>
+              <Field
+                label="Quick reason for delivery"
+                htmlFor="deliveryReason"
+                error={errors.deliveryReason}
+                labelClassName="text-base font-medium text-foreground"
+                errorClassName="text-base text-destructive"
+              >
+                <Input
+                  id="deliveryReason"
+                  name="deliveryReason"
+                  required
+                  maxLength={80}
+                  placeholder="e.g. mobility difficulties, caring for a newborn…"
+                  className="text-lg"
+                />
+                <p className="mt-1 text-sm text-muted-foreground">
+                  A short note helps us keep delivery available for neighbours who really need
+                  it.
+                </p>
+              </Field>
+            </>
+          )}
         </form>
       </div>
 
@@ -211,6 +267,7 @@ function OrderPageInner({
           pickupEndTime={pickupEndTime}
           pickupConfirmed={pickupConfirmed}
           onPickupConfirmedChange={setPickupConfirmed}
+          wantsHomeDelivery={wantsHomeDelivery}
         />
       </div>
     </>

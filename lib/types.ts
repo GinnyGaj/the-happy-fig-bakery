@@ -67,6 +67,9 @@ export interface Order {
   collected_by: string | null;
   collection_notes: string | null;
   coming_later: boolean;
+  wants_home_delivery: boolean;
+  delivery_address: string | null;
+  delivery_reason: string | null;
   created_at: string;
   updated_at: string;
 }

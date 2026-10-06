@@ -119,7 +119,10 @@ create or replace function place_order(
   p_whatsapp varchar,
   p_special_instructions text,
   p_items jsonb,
-  p_subtotal decimal
+  p_subtotal decimal,
+  p_wants_home_delivery boolean default false,
+  p_delivery_address text default null,
+  p_delivery_reason text default null
 ) returns uuid as $$
 declare
   v_order_id uuid;
@@ -160,10 +163,12 @@ begin
 
   insert into orders (
     weekly_menu_id, pickup_date, customer_first_name, customer_last_name, customer_whatsapp,
-    order_items, order_subtotal, special_instructions
+    order_items, order_subtotal, special_instructions,
+    wants_home_delivery, delivery_address, delivery_reason
   ) values (
     p_weekly_menu_id, v_pickup_date, p_first_name, p_last_name, p_whatsapp,
-    p_items, p_subtotal, p_special_instructions
+    p_items, p_subtotal, p_special_instructions,
+    p_wants_home_delivery, p_delivery_address, p_delivery_reason
   ) returning id into v_order_id;
 
   return v_order_id;
@@ -567,3 +572,10 @@ create table if not exists daily_made_quantities (
 
 alter table daily_made_quantities enable row level security;
 create policy "daily_made_quantities admin only" on daily_made_quantities for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+
+-- Migration: allow customers who genuinely cannot collect their order
+-- (disability, young children, etc.) to request home delivery, with the
+-- address to deliver to and a short reason (safe to re-run).
+alter table orders add column if not exists wants_home_delivery boolean not null default false;
+alter table orders add column if not exists delivery_address text;
+alter table orders add column if not exists delivery_reason text;

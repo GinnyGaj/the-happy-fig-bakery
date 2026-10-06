@@ -47,6 +47,7 @@ export function OrdersTable({ orders, pickupSlot }: { orders: Order[]; pickupSlo
   const [search, setSearch] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [deliveryOnly, setDeliveryOnly] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [sendingId, setSendingId] = useState<string | null>(null);
@@ -102,9 +103,10 @@ export function OrdersTable({ orders, pickupSlot }: { orders: Order[]; pickupSlo
           return false;
         }
       }
+      if (deliveryOnly && !o.wants_home_delivery) return false;
       return true;
     });
-  }, [orders, search, startDate, endDate]);
+  }, [orders, search, startDate, endDate, deliveryOnly]);
 
   const totalPages = Math.max(1, Math.ceil(filteredOrders.length / ORDERS_PER_PAGE));
   const currentPage = Math.min(page, totalPages);
@@ -135,7 +137,17 @@ export function OrdersTable({ orders, pickupSlot }: { orders: Order[]; pickupSlo
   }
 
   function downloadCsv() {
-    const header = ["Customer Name", "WhatsApp", "Item", "Quantity", "Item total cost", "Order time"];
+    const header = [
+      "Customer Name",
+      "WhatsApp",
+      "Item",
+      "Quantity",
+      "Item total cost",
+      "Order time",
+      "Home delivery",
+      "Delivery address",
+      "Delivery reason",
+    ];
     const rows = filteredOrders.flatMap((o) =>
       o.order_items.map((i) => [
         `${o.customer_first_name} ${o.customer_last_name}`,
@@ -144,6 +156,9 @@ export function OrdersTable({ orders, pickupSlot }: { orders: Order[]; pickupSlo
         i.quantity,
         formatPrice(i.price * i.quantity),
         new Date(o.created_at).toLocaleString("en-GB"),
+        o.wants_home_delivery ? "Yes" : "No",
+        o.delivery_address ?? "",
+        o.delivery_reason ?? "",
       ])
     );
 
@@ -224,6 +239,18 @@ export function OrdersTable({ orders, pickupSlot }: { orders: Order[]; pickupSlo
               Clear
             </Button>
           )}
+          <label className="flex h-10 items-center gap-2 text-sm text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={deliveryOnly}
+              onChange={(e) => {
+                setDeliveryOnly(e.target.checked);
+                setPage(1);
+              }}
+              className="h-4 w-4"
+            />
+            Home delivery only
+          </label>
         </div>
         <Button type="button" onClick={downloadCsv} className="h-10 w-full px-5 text-sm sm:w-auto">
           Download Orders as CSV
@@ -239,6 +266,7 @@ export function OrdersTable({ orders, pickupSlot }: { orders: Order[]; pickupSlo
               <th className="px-4 py-3">Items</th>
               <th className="px-4 py-3">Total</th>
               <th className="px-4 py-3">Ordered</th>
+              <th className="px-4 py-3">Delivery</th>
               <th className="px-4 py-3">Actions</th>
             </tr>
           </thead>
@@ -259,6 +287,15 @@ export function OrdersTable({ orders, pickupSlot }: { orders: Order[]; pickupSlo
                   <td className="px-4 py-3">{formatPrice(order.order_subtotal)}</td>
                   <td className="px-4 py-3">
                     {new Date(order.created_at).toLocaleString("en-GB")}
+                  </td>
+                  <td className="px-4 py-3">
+                    {order.wants_home_delivery ? (
+                      <span className="rounded-full bg-accent px-2 py-1 text-xs font-medium">
+                        Delivery
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">Pickup</span>
+                    )}
                   </td>
                   <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                     <div className="flex flex-nowrap items-center gap-2">
@@ -368,10 +405,26 @@ export function OrdersTable({ orders, pickupSlot }: { orders: Order[]; pickupSlo
                 </tr>
                 {expanded === order.id && (
                   <tr className="border-b border-border bg-muted/30">
-                    <td colSpan={6} className="px-4 py-3 text-muted-foreground">
-                      {order.special_instructions
-                        ? `Notes: ${order.special_instructions}`
-                        : "No special instructions."}
+                    <td colSpan={7} className="px-4 py-3 text-muted-foreground">
+                      <p>
+                        {order.special_instructions
+                          ? `Notes: ${order.special_instructions}`
+                          : "No special instructions."}
+                      </p>
+                      {order.wants_home_delivery && (
+                        <>
+                          <p className="mt-2">
+                            <span className="font-medium text-foreground">Deliver to:</span>{" "}
+                            {order.delivery_address}
+                          </p>
+                          {order.delivery_reason && (
+                            <p className="mt-1">
+                              <span className="font-medium text-foreground">Reason:</span>{" "}
+                              {order.delivery_reason}
+                            </p>
+                          )}
+                        </>
+                      )}
                     </td>
                   </tr>
                 )}
@@ -379,7 +432,7 @@ export function OrdersTable({ orders, pickupSlot }: { orders: Order[]; pickupSlo
             ))}
             {filteredOrders.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">
+                <td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">
                   No orders yet.
                 </td>
               </tr>

@@ -12,6 +12,7 @@ export function OrderSummary({
   pickupEndTime,
   pickupConfirmed,
   onPickupConfirmedChange,
+  wantsHomeDelivery = false,
 }: {
   submitting: boolean;
   onSubmit: () => void;
@@ -20,6 +21,7 @@ export function OrderSummary({
   pickupEndTime: string | null;
   pickupConfirmed: boolean;
   onPickupConfirmedChange: (checked: boolean) => void;
+  wantsHomeDelivery?: boolean;
 }) {
   const { lines, remove, subtotal } = useCart();
 
@@ -56,7 +58,7 @@ export function OrderSummary({
           <span>{formatPrice(subtotal)}</span>
         </div>
       </div>
-      {pickupDate && pickupStartTime && pickupEndTime && (
+      {!wantsHomeDelivery && pickupDate && pickupStartTime && pickupEndTime && (
         <label className="mt-4 flex items-start gap-2 text-base">
           <input
             type="checkbox"
@@ -74,7 +76,7 @@ export function OrderSummary({
       <Button
         type="button"
         onClick={onSubmit}
-        disabled={lines.length === 0 || submitting || !pickupConfirmed}
+        disabled={lines.length === 0 || submitting || (!wantsHomeDelivery && !pickupConfirmed)}
         className="mt-5 w-full"
       >
         {submitting ? "Placing your order…" : "Place My Order"}
