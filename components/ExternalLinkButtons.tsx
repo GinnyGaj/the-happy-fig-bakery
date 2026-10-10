@@ -1,6 +1,6 @@
 const MAPS_URL = "https://maps.app.goo.gl/fnX3CnTg2LuhGzA46";
 const WHATSAPP_URL = "https://chat.whatsapp.com/DE2dA3z3Ga53E3TLKq6FH7";
-const INSTAGRAM_URL = "https://www.instagram.com/thehappyfigbakery/";
+export const INSTAGRAM_URL = "https://www.instagram.com/thehappyfigbakery/";
 
 function GoogleMapsIcon() {
   return (
