@@ -2,6 +2,21 @@ import { createClient } from "@/lib/supabase/server";
 import { currentWeekStart } from "@/lib/utils";
 import type { MenuItem, Order, WeeklyMenu, StockLimit, DailyMadeQuantity } from "@/lib/types";
 
+// The menu customers currently see on the order page. Admin controls that
+// affect the live form (open/close, announcement) must target this row, not
+// the calendar week — the week rolls over on Saturday, before Sunday pickup.
+export async function getLatestPublishedMenu(): Promise<WeeklyMenu | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("weekly_menus")
+    .select("*")
+    .eq("is_published", true)
+    .order("week_start_date", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return (data as WeeklyMenu | null) ?? null;
+}
+
 export async function getCurrentWeeklyMenu(): Promise<{
   weeklyMenu: WeeklyMenu | null;
   items: MenuItem[];
@@ -9,13 +24,7 @@ export async function getCurrentWeeklyMenu(): Promise<{
 }> {
   const supabase = await createClient();
 
-  const { data: weeklyMenu } = await supabase
-    .from("weekly_menus")
-    .select("*")
-    .eq("is_published", true)
-    .order("week_start_date", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const weeklyMenu = await getLatestPublishedMenu();
 
   if (!weeklyMenu) {
     return { weeklyMenu: null, items: [], stock: [] };
@@ -61,7 +70,7 @@ export async function getCurrentWeeklyMenu(): Promise<{
   });
 
   return {
-    weeklyMenu: weeklyMenu as WeeklyMenu,
+    weeklyMenu,
     items: sortedItems,
     stock: (stock ?? []) as StockLimit[],
   };
