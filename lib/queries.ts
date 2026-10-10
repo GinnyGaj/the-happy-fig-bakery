@@ -17,6 +17,17 @@ export async function getLatestPublishedMenu(): Promise<WeeklyMenu | null> {
   return (data as WeeklyMenu | null) ?? null;
 }
 
+const priorityOrder = [
+  "honey & feta swirls",
+  "rosemary focaccia",
+  "chocolate chip cookie",
+  "spiced samosa",
+];
+const priorityRank = (name: string) => {
+  const index = priorityOrder.indexOf(name.trim().toLowerCase());
+  return index === -1 ? priorityOrder.length : index;
+};
+
 export async function getCurrentWeeklyMenu(): Promise<{
   weeklyMenu: WeeklyMenu | null;
   items: MenuItem[];
@@ -48,16 +59,6 @@ export async function getCurrentWeeklyMenu(): Promise<{
   const idOrder = new Map<string, number>(
     (menuItemIds as string[]).map((id, index) => [id, index])
   );
-  const priorityOrder = [
-    "honey & feta swirls",
-    "rosemary focaccia",
-    "chocolate chip cookie",
-    "spiced samosa",
-  ];
-  const priorityRank = (name: string) => {
-    const index = priorityOrder.indexOf(name.trim().toLowerCase());
-    return index === -1 ? priorityOrder.length : index;
-  };
 
   const sortedItems = ((items ?? []) as MenuItem[]).sort((a, b) => {
     const priorityDiff = priorityRank(a.name) - priorityRank(b.name);
@@ -74,6 +75,20 @@ export async function getCurrentWeeklyMenu(): Promise<{
     items: sortedItems,
     stock: (stock ?? []) as StockLimit[],
   };
+}
+
+// Everything we bake, shown to customers while pre-ordering is closed so they
+// can see our full range. Free test bakes are one-offs, so they're left out.
+export async function getFullMenu(): Promise<MenuItem[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("menu_items")
+    .select("*")
+    .eq("is_free_item", false)
+    .order("name", { ascending: true });
+  return ((data ?? []) as MenuItem[]).sort(
+    (a, b) => priorityRank(a.name) - priorityRank(b.name)
+  );
 }
 
 export async function getAllMenuItems(): Promise<MenuItem[]> {
