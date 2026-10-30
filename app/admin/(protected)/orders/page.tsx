@@ -16,10 +16,15 @@ export default async function AdminOrdersPage() {
 
   return (
     <div className="max-w-5xl">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl">Orders</h1>
-        <ButtonLink href="/admin/orders/requirements" variant="secondary" className="h-10 px-5 text-sm">
-          Ingredient requirements
+        <ButtonLink
+          href="/admin/orders/requirements"
+          variant="secondary"
+          className="h-10 px-4 text-sm sm:px-5"
+        >
+          <span className="sm:hidden">Ingredients</span>
+          <span className="hidden sm:inline">Ingredient requirements</span>
         </ButtonLink>
       </div>
       <OrdersTable orders={orders} pickupSlot={pickupSlot} />

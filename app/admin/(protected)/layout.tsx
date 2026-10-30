@@ -45,7 +45,7 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
         </nav>
       </aside>
 
-      <div className="flex flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between border-b border-border bg-card px-5 py-3 lg:justify-end">
           <div className="flex items-center gap-3 lg:hidden">
             <button
@@ -101,7 +101,7 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
           </nav>
         )}
 
-        <main className="flex-1 bg-background px-5 py-8">{children}</main>
+        <main className="min-w-0 flex-1 bg-background px-4 py-6 sm:px-6 lg:py-8">{children}</main>
       </div>
     </div>
   );
