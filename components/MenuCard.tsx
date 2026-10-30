@@ -72,7 +72,26 @@ export function MenuCard({
         <div className="mt-auto pt-3">
           {pastPickup ? null : soldOut ? (
             <Badge variant="outline">Sold out</Badge>
-          ) : !readOnly ? (
+          ) : readOnly ? (
+            // Greyed-out preview so visitors can see where they'll pick quantities
+            // once pre-orders open.
+            <div className="flex flex-col gap-1.5">
+              <label className="flex items-center gap-2 text-sm text-muted-foreground opacity-70">
+                Quantity
+                <Select
+                  value={0}
+                  disabled
+                  className="w-20"
+                  aria-label="Quantity (pre-orders closed)"
+                >
+                  <option value={0}>0</option>
+                </Select>
+              </label>
+              <span className="text-xs text-muted-foreground">
+                Available when pre-orders open
+              </span>
+            </div>
+          ) : (
             <div className="flex flex-col gap-1.5">
               {item.is_free_item && !freeItemUnlocked && (
                 <span className="inline-flex w-fit items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
@@ -107,7 +126,7 @@ export function MenuCard({
                 </Select>
               </label>
             </div>
-          ) : null}
+          )}
         </div>
       </div>
     </div>
